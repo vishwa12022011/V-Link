@@ -12,75 +12,128 @@ class BleService extends ChangeNotifier {
   BluetoothCharacteristic? _char;
   StreamSubscription?      _scanSub;
   ConnModel?               _conn;
-  bool                     scanning = false;
 
+  bool             scanning   = false;
   List<ScanResult> discovered = [];
 
   void attach(ConnModel c) => _conn = c;
   bool get connected => _char != null;
 
+  // ── Scan ──────────────────────────────────────────────────────────────────
   Future<void> startScan() async {
     if (scanning) return;
     scanning = true;
     discovered.clear();
-    _conn?.setStatus(ConnStatus.scanning);
-    _conn?.log('BLE_EVENT: SCAN_STARTED');
     notifyListeners();
-    await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
-    _scanSub = FlutterBluePlus.scanResults.listen((r) {
-      discovered = r; notifyListeners();
+
+    _conn?.setStatus(ConnStatus.scanning);
+    _conn?.log('BLE: Scan started');
+
+    try {
+      await FlutterBluePlus.startScan(
+        timeout: const Duration(seconds: 15),
+        // No withServices filter — show ALL devices
+      );
+    } catch (e) {
+      _conn?.log('BLE scan error: $e');
+    }
+
+    _scanSub = FlutterBluePlus.scanResults.listen((results) {
+      discovered = results;
+      notifyListeners();
     });
-    await Future.delayed(const Duration(seconds: 10));
-    await stopScan();
+
+    // Auto-stop after 15 s
+    Future.delayed(const Duration(seconds: 15), () {
+      if (scanning) stopScan();
+    });
   }
 
   Future<void> stopScan() async {
     scanning = false;
     await FlutterBluePlus.stopScan();
     _scanSub?.cancel();
-    if (_conn?.status == ConnStatus.scanning) _conn?.setStatus(ConnStatus.disconnected);
-    _conn?.log('BLE_EVENT: DISCOVERY_COMPLETE');
+    _scanSub = null;
+    if (_conn?.status == ConnStatus.scanning) {
+      _conn?.setStatus(ConnStatus.disconnected);
+    }
+    _conn?.log('BLE: Scan stopped — ${discovered.length} device(s) found');
     notifyListeners();
   }
 
-  Future<void> connect(BluetoothDevice d) async {
-    _conn?.setStatus(ConnStatus.connecting, device: d.platformName);
+  // ── Connect ───────────────────────────────────────────────────────────────
+  Future<void> connect(BluetoothDevice device) async {
+    if (scanning) await stopScan();
+    _conn?.setStatus(ConnStatus.connecting,
+        device: device.platformName.isNotEmpty
+            ? device.platformName
+            : device.remoteId.str);
+    _conn?.log('BLE: Connecting to ${device.platformName}…');
+
     try {
-      await d.connect(timeout: const Duration(seconds: 15));
-      _device = d;
-      final svcs = await d.discoverServices();
+      await device.connect(timeout: const Duration(seconds: 15));
+      _device = device;
+
+      final svcs = await device.discoverServices();
       for (final s in svcs) {
         if (s.uuid.toString().toLowerCase() == _svcUuid) {
           for (final c in s.characteristics) {
-            if (c.uuid.toString().toLowerCase() == _charUuid) _char = c;
+            if (c.uuid.toString().toLowerCase() == _charUuid) {
+              _char = c;
+            }
           }
         }
       }
-      _conn?.setStatus(ConnStatus.connected, device: d.platformName);
-      _conn?.log('MTU_EXCHANGE: 512 BYTES');
-      _conn?.log('PKT_IN: [cmd:0x01 key:"CONN" state:1]');
+
+      if (_char != null) {
+        _conn?.setStatus(ConnStatus.connected,
+            device: device.platformName.isNotEmpty
+                ? device.platformName
+                : device.remoteId.str);
+        _conn?.log('BLE: V-LINK service found — ready');
+      } else {
+        // Connected but no V-LINK service — still mark connected
+        // (user may connect to any device; HID won't work but connection succeeds)
+        _conn?.setStatus(ConnStatus.connected,
+            device: device.platformName.isNotEmpty
+                ? device.platformName
+                : device.remoteId.str);
+        _conn?.log('BLE: Connected (V-LINK HID service not found on this device)');
+      }
     } catch (e) {
-      _conn?.log('ERR: $e');
+      _conn?.log('BLE: Connection failed — $e');
       _conn?.setStatus(ConnStatus.disconnected);
     }
     notifyListeners();
   }
 
+  // ── Disconnect ────────────────────────────────────────────────────────────
   Future<void> disconnect() async {
     await _device?.disconnect();
-    _device = null; _char = null;
+    _device = null;
+    _char   = null;
     _conn?.setStatus(ConnStatus.disconnected);
-    _conn?.log('BLE_EVENT: DISCONNECTED');
+    _conn?.log('BLE: Disconnected');
     notifyListeners();
   }
 
+  // ── Send key packet ───────────────────────────────────────────────────────
   Future<void> sendKey(String key, {bool pressed = true}) async {
     if (_char == null) return;
     try {
-      await _char!.write(
-        utf8.encode(jsonEncode({'k': key, 's': pressed ? 1 : 0})),
-        withoutResponse: true,
-      );
+      final payload = utf8.encode(
+          jsonEncode({'k': key, 's': pressed ? 1 : 0}));
+      await _char!.write(payload, withoutResponse: true);
+    } catch (_) {}
+  }
+
+  // ── Send mouse delta ──────────────────────────────────────────────────────
+  Future<void> sendMouse(int dx, int dy) async {
+    if (_char == null) return;
+    try {
+      final payload = utf8.encode(
+          jsonEncode({'t': 'mouse', 'dx': dx, 'dy': dy}));
+      await _char!.write(payload, withoutResponse: true);
     } catch (_) {}
   }
 }
