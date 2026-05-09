@@ -47,21 +47,17 @@ class VLinkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BleService()),
         ChangeNotifierProvider(create: (_) => WifiService()),
         ChangeNotifierProvider(create: (_) => ProfileService()),
-<<<<<<< Updated upstream
-        ChangeNotifierProvider(create: (_) => VisualModel()),
-=======
         ChangeNotifierProvider(create: (_) => ToggleStateModel()),
         ChangeNotifierProvider(create: (_) => HudEditModel()),
         ChangeNotifierProvider(create: (_) => WeaponSlotModel()),
         ChangeNotifierProvider(create: (_) => HidService()),
         ChangeNotifierProvider(create: (_) => WebRtcService()),
->>>>>>> Stashed changes
       ],
       child: MaterialApp(
-        title: 'V-LINK',
+        title:                     'V-LINK',
         debugShowCheckedModeBanner: false,
-        theme: T.dark,
-        home: const BootScreen(),
+        theme:                     T.dark,
+        home:                      const BootScreen(),
       ),
     );
   }

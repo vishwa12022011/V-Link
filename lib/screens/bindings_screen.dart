@@ -12,48 +12,27 @@ class BindingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ps      = context.watch<ProfileService>();
     final profile = ps.active;
+
     if (profile == null) {
-      return const Center(child: CircularProgressIndicator(color: T.red));
+      return const Scaffold(
+        backgroundColor: Color(0xFF050A0E),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFFFF4655))),
+      );
     }
 
     // All sections — ability4, quick_melee, slide all included
     final sections = [
-<<<<<<< Updated upstream
-      ('MOVEMENT & CORE',     ['walk','sprint','jump','crouch']),
-      ('ABILITIES & COMBAT',  ['ability1','ability2','ultimate','fire','ads']),
-      ('UTILITY',             ['reload','buymenu','interact','gunswitch','knife','throw','emoji','map']),
-      ('COMMUNICATION',       ['mic','speaker','chat','settings','scoreboard']),
-=======
       ('MOVEMENT',        ['walk','sprint','jump','crouch','slide']),
       ('ABILITIES',       ['ability1','ability2','ultimate','ability4']),
       ('COMBAT',          ['fire','fire_left','ads','reload','quick_melee']),
       ('INTERACTION',     ['interact','buymenu']),
       ('COMMUNICATION',   ['mic','speaker','chat','emoji','settings','scoreboard','map']),
       ('WEAPON SLOTS',    ['slot_primary','slot_pistol','slot_grenade','slot_knife']),
->>>>>>> Stashed changes
     ];
 
     return Scaffold(
       backgroundColor: T.bg0,
       body: CustomScrollView(slivers: [
-<<<<<<< Updated upstream
-        SliverToBoxAdapter(child: VHeader(
-          title: 'BINDINGS / ${profile.name.split("_").first}',
-          sub: 'V-01',
-          trailing: VPill(label: 'ESP32: CONNECTED', color: T.teal),
-        )),
-
-        ...sections.map((sec) => SliverToBoxAdapter(child: _Section(
-          title: sec.$1,
-          bindings: profile.bindings.where((b) => sec.$2.contains(b.id)).toList(),
-          onUpdate: (updated) async {
-            ps.updateBinding(updated);
-            await ps.save(profile);
-          },
-        ))),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
-=======
 
         // Header
         SliverToBoxAdapter(child: VHeader(
@@ -98,36 +77,43 @@ class BindingsScreen extends StatelessWidget {
         }),
 
         const SliverToBoxAdapter(child: SizedBox(height: 110)),
->>>>>>> Stashed changes
       ]),
       bottomSheet: _SaveBar(profile: profile),
     );
   }
 }
 
-<<<<<<< Updated upstream
-=======
 // ── Section widget ────────────────────────────────────────────────────────────
->>>>>>> Stashed changes
 class _Section extends StatelessWidget {
   final String title;
   final List<KeyBinding> bindings;
   final Future<void> Function(KeyBinding) onUpdate;
-  const _Section({required this.title, required this.bindings, required this.onUpdate});
+
+  const _Section({
+    required this.title,
+    required this.bindings,
+    required this.onUpdate,
+  });
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-        child: Text(title, style: T.mono(9, color: T.grey).copyWith(letterSpacing: 2)),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 8),
+        child: Row(children: [
+          Container(width: 3, height: 12, color: T.red),
+          const SizedBox(width: 8),
+          Text(title,
+              style: T.mono(9, color: T.grey).copyWith(letterSpacing: 2)),
+        ]),
       ),
       ...bindings.map((b) => KeyBindingRow(binding: b, onUpdate: onUpdate)),
     ],
   );
 }
 
+// ── Save bar ──────────────────────────────────────────────────────────────────
 class _SaveBar extends StatelessWidget {
   final HudProfile profile;
   const _SaveBar({required this.profile});
@@ -154,12 +140,6 @@ class _SaveBar extends StatelessWidget {
       )),
       const SizedBox(width: 12),
       GestureDetector(
-<<<<<<< Updated upstream
-        onTap: () {},
-        child: Container(
-          width: 46, height: 46,
-          decoration: BoxDecoration(color: T.bg2, border: Border.all(color: T.border)),
-=======
         onTap: () {
           final defaults = HudProfile.defaults.bindings;
           for (final b in defaults) {
@@ -170,7 +150,6 @@ class _SaveBar extends StatelessWidget {
           width: 46, height: 46,
           decoration: BoxDecoration(
             color: T.bg2, border: Border.all(color: T.border)),
->>>>>>> Stashed changes
           child: const Icon(Icons.refresh, color: T.grey, size: 20),
         ),
       ),

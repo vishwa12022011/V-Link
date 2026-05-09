@@ -1,23 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../utils/app_theme.dart';
 
-/// A single circular HUD button that matches the Free-Fire / Valorant aesthetic:
-///  • Dark translucent background
-///  • White icon + optional label
-///  • Red glow / fill on press
-///  • Scales down on press (80 ms)
-///  • In edit mode → shows drag-handles & teal border
 class HudCircleBtn extends StatefulWidget {
-<<<<<<< Updated upstream
-  final double size;
-  final IconData icon;
-  final String? label;         // small text under icon (optional)
-  final String keySeq;
-  final bool editMode;
-  final bool isFireBtn;        // fire button gets special treatment
-=======
   final double   size;
   final String   iconKey;
   final String   keySeq;
@@ -28,37 +13,40 @@ class HudCircleBtn extends StatefulWidget {
   final bool     isToggleOn;
   final bool     isMuteStyle;
   final Color    accentColor;
->>>>>>> Stashed changes
   final VoidCallback? onPress;
   final VoidCallback? onRelease;
+  final VoidCallback? onToggle;
 
   const HudCircleBtn({
     super.key,
     required this.size,
     required this.iconKey,
     required this.keySeq,
-    this.label,
-    this.editMode = false,
-    this.isFireBtn = false,
+    required this.bindId,
+    this.editMode    = false,
+    this.isFireBtn   = false,
+    this.isToggleBtn = false,
+    this.isToggleOn  = false,
+    this.isMuteStyle = false,
+    this.accentColor = const Color(0xFFFF4655),
     this.onPress,
     this.onRelease,
+    this.onToggle,
   });
 
   @override
-  State<HudCircleBtn> createState() => _HudCircleBtnState();
+  State<HudCircleBtn> createState() => _State();
 }
 
-class _HudCircleBtnState extends State<HudCircleBtn>
-    with SingleTickerProviderStateMixin {
+class _State extends State<HudCircleBtn> with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
-  late Animation<double> _scale;
+  late Animation<double>   _scale;
   bool _down = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 80));
+    _ctrl  = AnimationController(vsync: this, duration: const Duration(milliseconds: 80));
     _scale = Tween(begin: 1.0, end: 0.84)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
   }
@@ -71,51 +59,30 @@ class _HudCircleBtnState extends State<HudCircleBtn>
     HapticFeedback.mediumImpact();
     setState(() => _down = true);
     _ctrl.forward();
-<<<<<<< Updated upstream
-    widget.onPress?.call();
-=======
     if (widget.isToggleBtn || widget.isMuteStyle) { widget.onToggle?.call(); }
     else { widget.onPress?.call(); }
->>>>>>> Stashed changes
   }
 
   void _onUp(PointerUpEvent _) {
     if (widget.editMode) return;
     setState(() => _down = false);
     _ctrl.reverse();
-    widget.onRelease?.call();
+    if (!widget.isToggleBtn && !widget.isMuteStyle) widget.onRelease?.call();
   }
 
   void _onCancel(PointerCancelEvent _) {
     if (widget.editMode) return;
     setState(() => _down = false);
     _ctrl.reverse();
-    widget.onRelease?.call();
+    if (!widget.isToggleBtn && !widget.isMuteStyle) widget.onRelease?.call();
   }
 
   @override
   Widget build(BuildContext context) {
-    final sz = widget.size.clamp(28.0, 140.0);
+    final sz     = widget.size.clamp(28.0, 140.0);
+    final accent = widget.accentColor;
+    final on     = widget.isToggleOn;
 
-<<<<<<< Updated upstream
-    // Colours
-    final ringColor = widget.editMode
-        ? T.teal
-        : _down
-            ? T.red
-            : const Color(0x55FFFFFF);
-
-    final bgColor = widget.isFireBtn
-        ? (_down ? T.red : const Color(0xCC1A2330))
-        : (_down ? const Color(0xBBFF4655) : const Color(0xAA111820));
-
-    final iconColor = _down ? Colors.white : const Color(0xDDFFFFFF);
-
-    return Listener(
-      onPointerDown: _down_,
-      onPointerUp: _up_,
-      onPointerCancel: _cancel_,
-=======
     final Color ring, bg, iconCol;
     if (widget.editMode) {
       ring = const Color(0xFF00E6C3); bg = const Color(0xAA111820); iconCol = const Color(0xCCFFFFFF);
@@ -133,43 +100,12 @@ class _HudCircleBtnState extends State<HudCircleBtn>
 
     return Listener(
       onPointerDown: _onDown, onPointerUp: _onUp, onPointerCancel: _onCancel,
->>>>>>> Stashed changes
       child: AnimatedBuilder(
         animation: _scale,
-        builder: (_, child) =>
-            Transform.scale(scale: _scale.value, child: child),
+        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
         child: SizedBox(
           width: sz, height: sz,
           child: CustomPaint(
-<<<<<<< Updated upstream
-            painter: _CirclePainter(
-              bg: bgColor,
-              ring: ringColor,
-              ringWidth: widget.editMode ? 1.5 : 1.2,
-              glow: _down,
-              glowColor: widget.isFireBtn ? T.red : T.red.withOpacity(0.6),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(widget.icon,
-                    size: sz * (widget.label != null ? 0.38 : 0.44),
-                    color: iconColor),
-                if (widget.label != null && sz > 50) ...[
-                  const SizedBox(height: 2),
-                  Text(widget.label!,
-                      style: T.mono(sz * 0.13, color: iconColor),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
-                if (widget.editMode)
-                  Positioned(
-                    top: 2, right: 2,
-                    child: Icon(Icons.open_with,
-                        size: sz * 0.18, color: T.teal),
-                  ),
-              ],
-            ),
-=======
             painter: _CircleBgP(bg: bg, ring: ring,
                 ringW: widget.editMode ? 1.5 : 1.2,
                 glow: _down || on, glowColor: accent),
@@ -191,7 +127,6 @@ class _HudCircleBtnState extends State<HudCircleBtn>
                     child: Container(width: sz*0.14, height: sz*0.14,
                         decoration: BoxDecoration(shape: BoxShape.circle, color: accent))),
             ]),
->>>>>>> Stashed changes
           ),
         ),
       ),
@@ -199,43 +134,6 @@ class _HudCircleBtnState extends State<HudCircleBtn>
   }
 }
 
-<<<<<<< Updated upstream
-class _CirclePainter extends CustomPainter {
-  final Color bg, ring, glowColor;
-  final double ringWidth;
-  final bool glow;
-
-  const _CirclePainter({
-    required this.bg, required this.ring,
-    required this.ringWidth, required this.glow,
-    required this.glowColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = size.width / 2 - 1;
-
-    // Glow bloom
-    if (glow) {
-      canvas.drawCircle(c, r + 6,
-          Paint()
-            ..color = glowColor.withOpacity(0.35)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
-    }
-
-    // Fill
-    canvas.drawCircle(c, r, Paint()..color = bg);
-
-    // Ring
-    canvas.drawCircle(
-      c, r,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..color = ring
-        ..strokeWidth = ringWidth,
-    );
-=======
 // ══════════════════════════════════════════════════════════════════════════════
 // ICON PAINTER
 // ══════════════════════════════════════════════════════════════════════════════
@@ -621,10 +519,6 @@ class _StrikeP extends CustomPainter {
   void paint(Canvas canvas, Size s) {
     canvas.drawLine(Offset(s.width*0.25,s.height*0.25), Offset(s.width*0.75,s.height*0.75),
         Paint()..color=const Color(0xCCFF4655)..strokeWidth=2.2..strokeCap=StrokeCap.round);
->>>>>>> Stashed changes
   }
-
-  @override
-  bool shouldRepaint(_CirclePainter o) =>
-      o.bg != bg || o.ring != ring || o.glow != glow;
+  @override bool shouldRepaint(_) => false;
 }
