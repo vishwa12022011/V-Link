@@ -36,7 +36,8 @@ class _ReorderableWrapState extends State<ReorderableWrap> {
             child: entry.value,
           ),
           child: DragTarget<int>(
-            builder: (BuildContext context, List<int?> candidateData, List<dynamic> rejectedData) {
+            builder: (BuildContext context, List<int?> candidateData,
+                List<dynamic> rejectedData) {
               return entry.value;
             },
             // Updated to the non-deprecated version

@@ -24,10 +24,10 @@ class ControllerScreen extends StatefulWidget {
 }
 
 class _ControllerScreenState extends State<ControllerScreen> {
-  bool    _editMode    = false;
+  bool _editMode = false;
   String? _selectedId;
-  double  _editSize    = 0.085;
-  double  _editOpacity = 0.85;
+  double _editSize = 0.085;
+  double _editOpacity = 0.85;
 
   late List<HudBtn> _buttons;
   late List<HudBtn> _defaults;
@@ -44,9 +44,9 @@ class _ControllerScreenState extends State<ControllerScreen> {
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
 
-    _buttons     = widget.profile.buttons.map((b) => b.clone()).toList();
-    _defaults    = widget.profile.buttons.map((b) => b.clone()).toList();
-    _accentHex   = widget.profile.accentHex;
+    _buttons = widget.profile.buttons.map((b) => b.clone()).toList();
+    _defaults = widget.profile.buttons.map((b) => b.clone()).toList();
+    _accentHex = widget.profile.accentHex;
     _sensitivity = widget.profile.sensitivityScale;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -64,14 +64,17 @@ class _ControllerScreenState extends State<ControllerScreen> {
   }
 
   Color get accent {
-    try { return Color(int.parse('FF${_accentHex.replaceAll('#','')}', radix: 16)); }
-    catch (_) { return const Color(0xFFFF4655); }
+    try {
+      return Color(int.parse('FF${_accentHex.replaceAll('#', '')}', radix: 16));
+    } catch (_) {
+      return const Color(0xFFFF4655);
+    }
   }
 
   void _sendKey(String key, bool pressed) {
     if (_editMode) return;
     final conn = context.read<ConnModel>();
-    final hid  = context.read<HidService>();
+    final hid = context.read<HidService>();
 
     if (hid.btHidActive || hid.usbHidActive) {
       hid.sendKey(key, pressed: pressed);
@@ -84,12 +87,13 @@ class _ControllerScreenState extends State<ControllerScreen> {
 
   void _sendTap(String key) {
     _sendKey(key, true);
-    Future.delayed(const Duration(milliseconds: 80), () => _sendKey(key, false));
+    Future.delayed(
+        const Duration(milliseconds: 80), () => _sendKey(key, false));
   }
 
   void _sendMouse(int dx, int dy) {
     if (_editMode) return;
-    final hid  = context.read<HidService>();
+    final hid = context.read<HidService>();
     final conn = context.read<ConnModel>();
     if (hid.btHidActive || hid.usbHidActive) {
       hid.sendMouse(dx, dy);
@@ -110,12 +114,18 @@ class _ControllerScreenState extends State<ControllerScreen> {
     }
   }
 
-  KeyBinding _binding(String bindId) =>
-    widget.profile.bindings.values.expand((b) => b).firstWhere((b) => b.id == bindId,
-        orElse: () => KeyBinding(id:bindId, label:bindId, keySequence:bindId, icon:bindId));
+  KeyBinding _binding(String bindId) => widget.profile.bindings.values
+      .expand((b) => b)
+      .firstWhere((b) => b.id == bindId,
+          orElse: () => KeyBinding(
+              id: bindId, label: bindId, keySequence: bindId, icon: bindId));
 
   HudBtn? _btn(String id) {
-    try { return _buttons.firstWhere((b) => b.id == id); } catch (_) { return null; }
+    try {
+      return _buttons.firstWhere((b) => b.id == id);
+    } catch (_) {
+      return null;
+    }
   }
 
   void _selectBtn(String id) {
@@ -123,8 +133,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
     final b = _btn(id);
     if (b == null) return;
     setState(() {
-      _selectedId  = id;
-      _editSize    = b.size;
+      _selectedId = id;
+      _editSize = b.size;
       _editOpacity = b.opacity;
     });
   }
@@ -143,9 +153,9 @@ class _ControllerScreenState extends State<ControllerScreen> {
     setState(() {
       final i = _buttons.indexWhere((b) => b.id == _selectedId);
       if (i < 0) return;
-      if (size    != null) _buttons[i].size    = size;
+      if (size != null) _buttons[i].size = size;
       if (opacity != null) _buttons[i].opacity = opacity;
-      _editSize    = _buttons[i].size;
+      _editSize = _buttons[i].size;
       _editOpacity = _buttons[i].opacity;
     });
   }
@@ -155,17 +165,20 @@ class _ControllerScreenState extends State<ControllerScreen> {
     widget.profile.buttons
       ..clear()
       ..addAll(_buttons.map((b) => b.clone()));
-    widget.profile.accentHex        = _accentHex;
+    widget.profile.accentHex = _accentHex;
     widget.profile.sensitivityScale = _sensitivity;
     context.read<WeaponSlotModel>().setAccent(accent);
     ps.save(widget.profile);
-    setState(() { _editMode = false; _selectedId = null; });
+    setState(() {
+      _editMode = false;
+      _selectedId = null;
+    });
   }
 
   void _restoreDefaults() => setState(() {
-    _buttons    = _defaults.map((b) => b.clone()).toList();
-    _selectedId = null;
-  });
+        _buttons = _defaults.map((b) => b.clone()).toList();
+        _selectedId = null;
+      });
 
   String? _selectedLabel() {
     if (_selectedId == null) return null;
@@ -186,7 +199,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
         onPointerDown: (event) {},
         child: RawGestureDetector(
           gestures: {
-            EagerGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerGestureRecognizer>(
+            EagerGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<EagerGestureRecognizer>(
               () => EagerGestureRecognizer(),
               (instance) {},
             ),
@@ -199,30 +213,36 @@ class _ControllerScreenState extends State<ControllerScreen> {
               // LAYER 1: VIDEO STREAM (Dynamic)
               if (wrtc.isConnected)
                 Positioned.fill(
-                  child: RTCVideoView(
-                    wrtc.remoteRenderer, 
-                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover
-                  ),
+                  child: RTCVideoView(wrtc.remoteRenderer,
+                      objectFit:
+                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover),
                 )
               else
                 Positioned.fill(child: _HudBg()),
 
               // LAYER 2: Mouse Input
               if (!_editMode)
-                Positioned.fill(child: _MouseDragLayer(sensitivity: _sensitivity, onDelta: _sendMouse)),
+                Positioned.fill(
+                    child: _MouseDragLayer(
+                        sensitivity: _sensitivity, onDelta: _sendMouse)),
 
               // LAYER 3: HUD Elements
               Center(child: _RingCrosshair(accentColor: accent)),
 
               _DraggableWeaponBar(
-                W: W, H: H, editMode: _editMode,
+                W: W,
+                H: H,
+                editMode: _editMode,
                 onKey: (k, p) => _sendKey(k, p),
                 onSelect: () => _selectBtn('weapon_bar'),
-                child: WeaponSlotBar(model: wsm, editMode: _editMode, onKeyTap: _sendTap),
+                child: WeaponSlotBar(
+                    model: wsm, editMode: _editMode, onKeyTap: _sendTap),
               ),
 
               _DraggableJoystick(
-                W: W, H: H, editMode: _editMode,
+                W: W,
+                H: H,
+                editMode: _editMode,
                 onKey: (k, p) => _sendKey(k, p),
                 onSelect: () => _selectBtn('joystick'),
               ),
@@ -233,7 +253,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
               // UI Panels (Edit Panel)
               if (_editMode)
                 Positioned(
-                  top: 0, left: W / 2 - 160,
+                  top: 0,
+                  left: W / 2 - 160,
                   child: HudCompactEditPanel(
                     selectedId: _selectedId,
                     selectedLabel: _selectedLabel(),
@@ -243,13 +264,18 @@ class _ControllerScreenState extends State<ControllerScreen> {
                     accentHex: _accentHex,
                     onSizeChanged: (v) => _updateSelected(size: v),
                     onOpacityChanged: (v) => _updateSelected(opacity: v),
-                    onSensitivityChanged: (v) => setState(() => _sensitivity = v),
+                    onSensitivityChanged: (v) =>
+                        setState(() => _sensitivity = v),
                     onAccentChanged: (hex) {
                       setState(() => _accentHex = hex);
                       wsm.setAccent(accent);
                     },
-                    onNameChanged: (newName) => _updateSelected(newName: newName),
-                    onExit: () => setState(() { _editMode = false; _selectedId = null; }),
+                    onNameChanged: (newName) =>
+                        _updateSelected(newName: newName),
+                    onExit: () => setState(() {
+                      _editMode = false;
+                      _selectedId = null;
+                    }),
                     onRestore: _restoreDefaults,
                     onSave: _saveEdit,
                   ),
@@ -258,13 +284,14 @@ class _ControllerScreenState extends State<ControllerScreen> {
               // DYNAMIC WEBRTC TOGGLE
               if (wrtc.isConnected)
                 Positioned(
-                  top: 4, right: 80,
+                  top: 4,
+                  right: 80,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xBB0B1117), 
-                      border: Border.all(color: const Color(0xFF00E6C3))
-                    ),
+                        color: const Color(0xBB0B1117),
+                        border: Border.all(color: const Color(0xFF00E6C3))),
                     child: Row(children: [
                       Text("WebRTC", style: T.mono(8, color: Colors.white)),
                       Switch(
@@ -279,17 +306,22 @@ class _ControllerScreenState extends State<ControllerScreen> {
 
               // Global Status Dot
               Positioned(top: 4, right: 6, child: _ConnDot(accent: accent)),
-              
+
               // Back Button
               Positioned(
-                top: 4, left: 6,
+                top: 4,
+                left: 6,
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                    decoration: BoxDecoration(color: const Color(0xBB0B1117), border: Border.all(color: const Color(0x33FFFFFF))),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(
+                        color: const Color(0xBB0B1117),
+                        border: Border.all(color: const Color(0x33FFFFFF))),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.arrow_back_ios_new, color: T.grey, size: 10),
+                      const Icon(Icons.arrow_back_ios_new,
+                          color: T.grey, size: 10),
                       const SizedBox(width: 3),
                       Text('EXIT', style: T.mono(8, color: T.grey)),
                     ]),
@@ -309,50 +341,58 @@ class _ControllerScreenState extends State<ControllerScreen> {
     for (final btn in _buttons) {
       if (!btn.visible) continue;
       final bind = _binding(btn.bindId);
-      final sz   = _sz(W, btn.size);
+      final sz = _sz(W, btn.size);
 
-      final isFire   = btn.bindId == 'fire' || btn.bindId == 'fire_left';
+      final isFire = btn.bindId == 'fire' || btn.bindId == 'fire_left';
       final isToggle = bind.isToggle || bind.isHold;
-      final isMute   = btn.bindId == 'mic' || btn.bindId == 'speaker';
+      final isMute = btn.bindId == 'mic' || btn.bindId == 'speaker';
 
       final child = HudCircleBtn(
-        size:        sz,
-        iconKey:     bind.icon,
-        keySeq:      bind.keySequence,
-        bindId:      btn.bindId,
-        editMode:    _editMode,
-        isFireBtn:   isFire && !isToggle,
+        size: sz,
+        iconKey: bind.icon,
+        keySeq: bind.keySequence,
+        bindId: btn.bindId,
+        editMode: _editMode,
+        isFireBtn: isFire && !isToggle,
         isToggleBtn: isToggle,
-        isToggleOn:  _toggleStates[btn.bindId] ?? false,
+        isToggleOn: _toggleStates[btn.bindId] ?? false,
         isMuteStyle: isMute,
         accentColor: accent,
-        onPress:     () => _sendKey(bind.keySequence, true),
-        onRelease:   () => _sendKey(bind.keySequence, false),
-        onToggle:    () => _handleToggle(btn.bindId, bind.keySequence, bind.isHold),
+        onPress: () => _sendKey(bind.keySequence, true),
+        onRelease: () => _sendKey(bind.keySequence, false),
+        onToggle: () =>
+            _handleToggle(btn.bindId, bind.keySequence, bind.isHold),
       );
 
       widgets.add(_DraggableBtn(
-        key:      ValueKey(btn.id),
-        btn:      btn, sz: sz, W: W, H: H,
+        key: ValueKey(btn.id),
+        btn: btn,
+        sz: sz,
+        W: W,
+        H: H,
         editMode: _editMode,
-        opacity:  btn.opacity,
-        onTap:    () => _selectBtn(btn.id),
-        onDragEnd: (nx, ny) => setState(() { btn.x = nx; btn.y = ny; }),
-        child:    child,
+        opacity: btn.opacity,
+        onTap: () => _selectBtn(btn.id),
+        onDragEnd: (nx, ny) => setState(() {
+          btn.x = nx;
+          btn.y = ny;
+        }),
+        child: child,
       ));
     }
 
     return widgets;
   }
 
-  List<Widget> _buildEditOutlines(double W, double H) =>
-      _buttons.map((btn) {
+  List<Widget> _buildEditOutlines(double W, double H) => _buttons.map((btn) {
         final sz = _sz(W, btn.size);
         return Positioned(
           left: W * btn.x - sz / 2 - 3,
-          top:  H * btn.y - sz / 2 - 3,
-          child: IgnorePointer(child: Container(
-            width: sz + 6, height: sz + 6,
+          top: H * btn.y - sz / 2 - 3,
+          child: IgnorePointer(
+              child: Container(
+            width: sz + 6,
+            height: sz + 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
@@ -372,41 +412,53 @@ class _ControllerScreenState extends State<ControllerScreen> {
 class _DraggableBtn extends StatelessWidget {
   final HudBtn btn;
   final double sz, W, H, opacity;
-  final bool   editMode;
+  final bool editMode;
   final Widget child;
   final VoidCallback onTap;
   final void Function(double, double) onDragEnd;
 
   const _DraggableBtn({
     super.key,
-    required this.btn, required this.sz, required this.W, required this.H,
-    required this.editMode, required this.opacity, required this.child,
-    required this.onTap, required this.onDragEnd,
+    required this.btn,
+    required this.sz,
+    required this.W,
+    required this.H,
+    required this.editMode,
+    required this.opacity,
+    required this.child,
+    required this.onTap,
+    required this.onDragEnd,
   });
 
   @override
   Widget build(BuildContext context) => Positioned(
-    left: W * btn.x - sz / 2,
-    top:  H * btn.y - sz / 2,
-    child: GestureDetector(
-      onTap:       editMode ? onTap : null,
-      onPanUpdate: editMode ? (d) {
-        final nx = (btn.x + d.delta.dx / W).clamp(0.01, 0.99);
-        final ny = (btn.y + d.delta.dy / H).clamp(0.01, 0.99);
-        onDragEnd(nx, ny);
-      } : null,
-      child: Opacity(opacity: opacity, child: child),
-    ),
-  );
+        left: W * btn.x - sz / 2,
+        top: H * btn.y - sz / 2,
+        child: GestureDetector(
+          onTap: editMode ? onTap : null,
+          onPanUpdate: editMode
+              ? (d) {
+                  final nx = (btn.x + d.delta.dx / W).clamp(0.01, 0.99);
+                  final ny = (btn.y + d.delta.dy / H).clamp(0.01, 0.99);
+                  onDragEnd(nx, ny);
+                }
+              : null,
+          child: Opacity(opacity: opacity, child: child),
+        ),
+      );
 }
 
 class _DraggableJoystick extends StatefulWidget {
   final double W, H;
-  final bool   editMode;
+  final bool editMode;
   final void Function(String, bool) onKey;
   final VoidCallback onSelect;
-  const _DraggableJoystick({required this.W, required this.H,
-      required this.editMode, required this.onKey, required this.onSelect});
+  const _DraggableJoystick(
+      {required this.W,
+      required this.H,
+      required this.editMode,
+      required this.onKey,
+      required this.onSelect});
 
   @override
   State<_DraggableJoystick> createState() => _DraggableJoystickState();
@@ -420,15 +472,19 @@ class _DraggableJoystickState extends State<_DraggableJoystick> {
     final sz = (widget.W * 0.175).clamp(80.0, 160.0);
     return Positioned(
       left: widget.W * _fx - sz / 2,
-      top:  widget.H * _fy - sz / 2,
+      top: widget.H * _fy - sz / 2,
       child: GestureDetector(
         onTap: widget.editMode ? widget.onSelect : null,
-        onPanUpdate: widget.editMode ? (d) => setState(() {
-          _fx = (_fx + d.delta.dx / widget.W).clamp(0.02, 0.45);
-          _fy = (_fy + d.delta.dy / widget.H).clamp(0.30, 0.95);
-        }) : null,
+        onPanUpdate: widget.editMode
+            ? (d) => setState(() {
+                  _fx = (_fx + d.delta.dx / widget.W).clamp(0.02, 0.45);
+                  _fy = (_fy + d.delta.dy / widget.H).clamp(0.30, 0.95);
+                })
+            : null,
         child: JoystickWidget(
-          size: sz, editMode: widget.editMode, onKey: widget.onKey,
+          size: sz,
+          editMode: widget.editMode,
+          onKey: widget.onKey,
         ),
       ),
     );
@@ -476,7 +532,6 @@ class _DraggableWeaponBarState extends State<_DraggableWeaponBar> {
   }
 }
 
-
 class _MouseDragLayer extends StatefulWidget {
   final double sensitivity;
   final void Function(int dx, int dy) onDelta;
@@ -518,8 +573,8 @@ class _RingCrosshair extends StatelessWidget {
   const _RingCrosshair({required this.accentColor});
 
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: const Size(46, 46), painter: _RingCrosshairP(accentColor));
+  Widget build(BuildContext context) => CustomPaint(
+      size: const Size(46, 46), painter: _RingCrosshairP(accentColor));
 }
 
 class _RingCrosshairP extends CustomPainter {
@@ -531,43 +586,57 @@ class _RingCrosshairP extends CustomPainter {
     final c = Offset(s.width / 2, s.height / 2);
     final r = s.width / 2 - 3;
     const gap = 0.20;
-    const pi  = 3.14159265;
+    const pi = 3.14159265;
 
-    canvas.drawCircle(c, r + 2,
-        Paint()..color = Colors.white.withValues(alpha: 0.07)
-               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+    canvas.drawCircle(
+        c,
+        r + 2,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.07)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
 
     final rp = Paint()
       ..style = PaintingStyle.stroke
       ..color = Colors.white.withValues(alpha: 0.88)
-      ..strokeWidth = 1.8..strokeCap = StrokeCap.round;
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
 
     final rect = Rect.fromCircle(center: c, radius: r);
     for (int i = 0; i < 4; i++) {
       canvas.drawArc(rect, i * (pi / 2) + gap, pi / 2 - gap * 2, false, rp);
     }
-    canvas.drawCircle(c, 2.5, Paint()..color = Colors.white.withValues(alpha: 0.92));
-    canvas.drawCircle(c, r * 0.28,
-        Paint()..style = PaintingStyle.stroke
-               ..color = Colors.white.withValues(alpha: 0.14)..strokeWidth = 0.8);
+    canvas.drawCircle(
+        c, 2.5, Paint()..color = Colors.white.withValues(alpha: 0.92));
+    canvas.drawCircle(
+        c,
+        r * 0.28,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..color = Colors.white.withValues(alpha: 0.14)
+          ..strokeWidth = 0.8);
   }
 
-  @override bool shouldRepaint(_RingCrosshairP o) => o.accent != accent;
+  @override
+  bool shouldRepaint(_RingCrosshairP o) => o.accent != accent;
 }
 
 class _HudBg extends StatelessWidget {
-  @override Widget build(BuildContext ctx) => CustomPaint(painter: _HudBgP());
+  @override
+  Widget build(BuildContext ctx) => CustomPaint(painter: _HudBgP());
 }
 
 class _HudBgP extends CustomPainter {
   @override
   void paint(Canvas canvas, Size s) {
     final p = Paint()..color = const Color(0xFF1A2330).withValues(alpha: 0.16);
-    for (double x = 0; x < s.width;  x += 40)
-      for (double y = 0; y < s.height; y += 40)
+    for (double x = 0; x < s.width; x += 40)
+      for (double y = 0; y < s.height; y += 40) {
         canvas.drawCircle(Offset(x, y), 0.6, p);
+      }
   }
-  @override bool shouldRepaint(_) => false;
+
+  @override
+  bool shouldRepaint(_) => false;
 }
 
 class _ConnDot extends StatelessWidget {
@@ -577,13 +646,16 @@ class _ConnDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final conn = context.watch<ConnModel>();
-    final hid  = context.watch<HidService>();
+    final hid = context.watch<HidService>();
     final active = conn.isConnected || hid.btHidActive || hid.usbHidActive;
-    final label  = hid.btHidActive  ? 'BT HID'
-                 : hid.usbHidActive ? 'USB HID'
-                 : conn.isConnected ? (conn.deviceName ?? 'LINKED')
-                 : 'NO LINK';
-    final color  = active ? const Color(0xFF00E6C3) : const Color(0xFF3D5166);
+    final label = hid.btHidActive
+        ? 'BT HID'
+        : hid.usbHidActive
+            ? 'USB HID'
+            : conn.isConnected
+                ? (conn.deviceName ?? 'LINKED')
+                : 'NO LINK';
+    final color = active ? const Color(0xFF00E6C3) : const Color(0xFF3D5166);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -592,7 +664,9 @@ class _ConnDot extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 5, height: 5,
+        Container(
+            width: 5,
+            height: 5,
             decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
         const SizedBox(width: 5),
         Text(label, style: T.mono(8, color: color)),

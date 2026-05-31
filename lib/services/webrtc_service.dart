@@ -36,21 +36,25 @@ class WebRtcService extends ChangeNotifier {
       notifyListeners();
 
       // 1. Initialize Signaling
-      _socket = IO.io(sessionUrl!, IO.OptionBuilder()
-          .setTransports(['websocket'])
-          .disableAutoConnect()
-          .build());
+      _socket = IO.io(
+          sessionUrl!,
+          IO.OptionBuilder()
+              .setTransports(['websocket'])
+              .disableAutoConnect()
+              .build());
 
       // 2. Setup PeerConnection
       final config = {
-        'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]
+        'iceServers': [
+          {'urls': 'stun:stun.l.google.com:19302'}
+        ]
       };
       _peerConnection = await createPeerConnection(config);
 
       // 3. Setup Data Channel
       _dataChannel = await _peerConnection!.createDataChannel(
           'hid-channel', RTCDataChannelInit()..ordered = false);
-      
+
       _dataChannel!.onDataChannelState = (s) {
         if (s == RTCDataChannelState.RTCDataChannelOpen) {
           state = WebRtcState.connected;
@@ -67,7 +71,6 @@ class WebRtcService extends ChangeNotifier {
       // 5. Connect Socket
       _socket!.connect();
       _socket!.onConnect((_) => print("Connected to signaling server"));
-
     } catch (e) {
       state = WebRtcState.error;
       errorMsg = e.toString();
@@ -78,20 +81,14 @@ class WebRtcService extends ChangeNotifier {
   // HID Input Methods
   Future<void> sendKey(String key, {bool pressed = true}) async {
     if (!isConnected) return;
-    _dataChannel?.send(RTCDataChannelMessage(jsonEncode({
-      "type": "keyboard",
-      "key": key,
-      "state": pressed ? "down" : "up"
-    })));
+    _dataChannel?.send(RTCDataChannelMessage(jsonEncode(
+        {"type": "keyboard", "key": key, "state": pressed ? "down" : "up"})));
   }
 
   Future<void> sendMouse(int dx, int dy) async {
     if (!isConnected) return;
-    _dataChannel?.send(RTCDataChannelMessage(jsonEncode({
-      "type": "mouse",
-      "dx": dx,
-      "dy": dy
-    })));
+    _dataChannel?.send(RTCDataChannelMessage(
+        jsonEncode({"type": "mouse", "dx": dx, "dy": dy})));
   }
 
   void disconnect() {
@@ -110,18 +107,24 @@ class WebRtcService extends ChangeNotifier {
   }
 
   Map<String, String> _parseQr(String payload) {
-    final url = RegExp(r'"url"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
-    final token = RegExp(r'"token"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
+    final url =
+        RegExp(r'"url"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
+    final token =
+        RegExp(r'"token"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
     if (url.isEmpty) throw Exception('Invalid QR code');
     return {'url': url, 'token': token};
   }
 
   String get statusText {
     switch (state) {
-      case WebRtcState.idle: return 'Not connected';
-      case WebRtcState.connecting: return 'Connecting…';
-      case WebRtcState.connected: return 'Connected via WebRTC';
-      case WebRtcState.error: return 'Error: ${errorMsg ?? "unknown"}';
+      case WebRtcState.idle:
+        return 'Not connected';
+      case WebRtcState.connecting:
+        return 'Connecting…';
+      case WebRtcState.connected:
+        return 'Connected via WebRTC';
+      case WebRtcState.error:
+        return 'Error: ${errorMsg ?? "unknown"}';
     }
   }
 }

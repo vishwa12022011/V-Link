@@ -5,14 +5,14 @@ import 'package:flutter/services.dart';
 typedef KeySender = void Function(String key, bool pressed);
 
 class JoystickWidget extends StatefulWidget {
-  final double      size;
-  final bool        editMode;
+  final double size;
+  final bool editMode;
   final KeySender? onKey;
-  final Color       accentColor;
+  final Color accentColor;
 
   const JoystickWidget({
     super.key,
-    this.size     = 140,
+    this.size = 140,
     this.editMode = false,
     this.onKey,
     this.accentColor = const Color(0xFFFF4655),
@@ -24,18 +24,18 @@ class JoystickWidget extends StatefulWidget {
 
 class _JoystickState extends State<JoystickWidget>
     with SingleTickerProviderStateMixin {
-  Offset _knob   = Offset.zero;
-  bool   _active = false;
-  String _last   = '';
+  Offset _knob = Offset.zero;
+  bool _active = false;
+  String _last = '';
 
   // Dead-zone radius as fraction of maxR
   static const double _deadFrac = 0.18;
 
-  double get _maxR  => widget.size * 0.30;
+  double get _maxR => widget.size * 0.30;
   double get _deadR => _maxR * _deadFrac;
 
   late AnimationController _pulseCtrl;
-  late Animation<double>   _pulse;
+  late Animation<double> _pulse;
 
   @override
   void initState() {
@@ -48,39 +48,56 @@ class _JoystickState extends State<JoystickWidget>
   }
 
   @override
-  void dispose() { _pulseCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
 
   Offset _clamp(Offset local) {
-    final rel  = local - Offset(widget.size / 2, widget.size / 2);
+    final rel = local - Offset(widget.size / 2, widget.size / 2);
     final dist = rel.distance;
     return dist > _maxR ? rel / dist * _maxR : rel;
   }
 
   void _move(Offset local) {
     final clamped = _clamp(local);
-    setState(() { _knob = clamped; _active = true; });
+    setState(() {
+      _knob = clamped;
+      _active = true;
+    });
 
     final nx = clamped.dx / _maxR;
     final ny = clamped.dy / _maxR;
 
     // Apply dead-zone
     final inDead = clamped.distance < _deadR;
-    final keys   = inDead ? '' : [
-      if (nx >  0.28) 'D',
-      if (nx < -0.28) 'A',
-      if (ny < -0.28) 'W',
-      if (ny >  0.28) 'S',
-    ].join('+');
+    final keys = inDead
+        ? ''
+        : [
+            if (nx > 0.28) 'D',
+            if (nx < -0.28) 'A',
+            if (ny < -0.28) 'W',
+            if (ny > 0.28) 'S',
+          ].join('+');
 
     if (keys == _last) return;
-    for (final k in ['W','A','S','D']) widget.onKey?.call(k, false);
-    for (final k in keys.split('+'))  { if (k.isNotEmpty) widget.onKey?.call(k, true); }
+    for (final k in ['W', 'A', 'S', 'D']) {
+      widget.onKey?.call(k, false);
+    }
+    for (final k in keys.split('+')) {
+      if (k.isNotEmpty) widget.onKey?.call(k, true);
+    }
     _last = keys;
   }
 
   void _end() {
-    setState(() { _knob = Offset.zero; _active = false; });
-    for (final k in ['W','A','S','D']) widget.onKey?.call(k, false);
+    setState(() {
+      _knob = Offset.zero;
+      _active = false;
+    });
+    for (final k in ['W', 'A', 'S', 'D']) {
+      widget.onKey?.call(k, false);
+    }
     _last = '';
   }
 
@@ -88,31 +105,40 @@ class _JoystickState extends State<JoystickWidget>
   Widget build(BuildContext context) {
     if (widget.editMode) {
       return SizedBox(
-        width: widget.size, height: widget.size,
-        child: CustomPaint(painter: _JsPainter(
-          knob: Offset.zero, active: false, editMode: true,
-          pulse: 1.0, deadR: _deadR, maxR: _maxR, accent: widget.accentColor,
+        width: widget.size,
+        height: widget.size,
+        child: CustomPaint(
+            painter: _JsPainter(
+          knob: Offset.zero,
+          active: false,
+          editMode: true,
+          pulse: 1.0,
+          deadR: _deadR,
+          maxR: _maxR,
+          accent: widget.accentColor,
         )),
       );
     }
 
     return GestureDetector(
-      onPanStart:  (_) => HapticFeedback.lightImpact(),
+      onPanStart: (_) => HapticFeedback.lightImpact(),
       onPanUpdate: (d) => _move(d.localPosition),
-      onPanEnd:    (_) => _end(),
+      onPanEnd: (_) => _end(),
       onPanCancel: _end,
       child: AnimatedBuilder(
         animation: _pulse,
         builder: (_, __) => SizedBox(
-          width: widget.size, height: widget.size,
-          child: CustomPaint(painter: _JsPainter(
-            knob:     _knob,
-            active:   _active,
+          width: widget.size,
+          height: widget.size,
+          child: CustomPaint(
+              painter: _JsPainter(
+            knob: _knob,
+            active: _active,
             editMode: false,
-            pulse:    _pulse.value,
-            deadR:    _deadR,
-            maxR:     _maxR,
-            accent:   widget.accentColor,
+            pulse: _pulse.value,
+            deadR: _deadR,
+            maxR: _maxR,
+            accent: widget.accentColor,
           )),
         ),
       ),
@@ -125,71 +151,88 @@ class _JoystickState extends State<JoystickWidget>
 // ══════════════════════════════════════════════════════════════════════════════
 class _JsPainter extends CustomPainter {
   final Offset knob;
-  final bool   active, editMode;
+  final bool active, editMode;
   final double pulse, deadR, maxR;
-  final Color  accent;
+  final Color accent;
 
   const _JsPainter({
-    required this.knob, required this.active,
-    required this.editMode, required this.pulse,
-    required this.deadR, required this.maxR,
+    required this.knob,
+    required this.active,
+    required this.editMode,
+    required this.pulse,
+    required this.deadR,
+    required this.maxR,
     required this.accent,
   });
 
-  static const Color _ring    = Color(0x55FFFFFF);
+  static const Color _ring = Color(0x55FFFFFF);
   static const Color _dimLine = Color(0x33FFFFFF);
-  static const Color _editRing= Color(0xFF00E6C3);
+  static const Color _editRing = Color(0xFF00E6C3);
 
   @override
   void paint(Canvas canvas, Size s) {
-    final c   = Offset(s.width / 2, s.height / 2);
-    final or  = s.width / 2 - 2;  // outer ring radius
-    final kc  = c + knob;         // knob centre
-    final kr  = or * 0.32;        // knob radius
+    final c = Offset(s.width / 2, s.height / 2);
+    final or = s.width / 2 - 2; // outer ring radius
+    final kc = c + knob; // knob centre
+    final kr = or * 0.32; // knob radius
 
     // ── Outer glow (active) ────────────────────────────────────────────────
     if (active) {
-      canvas.drawCircle(c, or + 4,
+      canvas.drawCircle(
+          c,
+          or + 4,
           Paint()
             ..color = accent.withValues(alpha: 0.18 * pulse)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
     }
 
     // ── Outer ring fill ────────────────────────────────────────────────────
-    canvas.drawCircle(c, or,
+    canvas.drawCircle(
+        c,
+        or,
         Paint()
           ..shader = const RadialGradient(colors: [
-              Color(0xFF1A2330),
-              Color(0xFF0B1117),
-            ]).createShader(Rect.fromCircle(center: c, radius: or)));
+            Color(0xFF1A2330),
+            Color(0xFF0B1117),
+          ]).createShader(Rect.fromCircle(center: c, radius: or)));
 
     // ── Directional zone indicators (N/S/E/W triangles) ───────────────────
     _drawDirIndicators(canvas, c, or, kr);
 
     // ── Dead-zone circle (subtle) ──────────────────────────────────────────
-    canvas.drawCircle(c, deadR,
+    canvas.drawCircle(
+        c,
+        deadR,
         Paint()
           ..style = PaintingStyle.stroke
           ..color = _dimLine
           ..strokeWidth = 0.6);
 
     // ── Outer ring stroke ─────────────────────────────────────────────────
-    canvas.drawCircle(c, or,
+    canvas.drawCircle(
+        c,
+        or,
         Paint()
           ..style = PaintingStyle.stroke
-          ..color = editMode ? _editRing : (active ? accent.withValues(alpha: 0.7) : _ring)
+          ..color = editMode
+              ? _editRing
+              : (active ? accent.withValues(alpha: 0.7) : _ring)
           ..strokeWidth = active ? 1.8 : 1.2);
 
     // ── Knob shadow/glow ──────────────────────────────────────────────────
     if (active) {
-      canvas.drawCircle(kc, kr + 5,
+      canvas.drawCircle(
+          kc,
+          kr + 5,
           Paint()
             ..color = accent.withValues(alpha: 0.30)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
     }
 
     // ── Knob fill (gradient) ───────────────────────────────────────────────
-    canvas.drawCircle(kc, kr,
+    canvas.drawCircle(
+        kc,
+        kr,
         Paint()
           ..shader = RadialGradient(
             center: const Alignment(-0.3, -0.3),
@@ -199,7 +242,9 @@ class _JsPainter extends CustomPainter {
           ).createShader(Rect.fromCircle(center: kc, radius: kr)));
 
     // ── Knob ring ──────────────────────────────────────────────────────────
-    canvas.drawCircle(kc, kr,
+    canvas.drawCircle(
+        kc,
+        kr,
         Paint()
           ..style = PaintingStyle.stroke
           ..color = active ? accent : const Color(0x88FFFFFF)
@@ -216,8 +261,7 @@ class _JsPainter extends CustomPainter {
 
     // ── Centre dot ────────────────────────────────────────────────────────
     if (knob == Offset.zero) {
-      canvas.drawCircle(c, 3,
-          Paint()..color = const Color(0x55FFFFFF));
+      canvas.drawCircle(c, 3, Paint()..color = const Color(0x55FFFFFF));
     }
   }
 
@@ -228,8 +272,8 @@ class _JsPainter extends CustomPainter {
 
     // 4 small triangles pointing inward at N/S/E/W
     const inset = 6.0;
-    final tip   = or - inset;
-    final base  = kr + 4.0;
+    final tip = or - inset;
+    final base = kr + 4.0;
 
     for (int i = 0; i < 4; i++) {
       final angle = i * math.pi / 2 - math.pi / 2; // start at top
@@ -239,7 +283,7 @@ class _JsPainter extends CustomPainter {
       final path = Path()
         ..moveTo(0, -tip)
         ..lineTo(-5, -base)
-        ..lineTo( 5, -base)
+        ..lineTo(5, -base)
         ..close();
       canvas.drawPath(path, p);
       canvas.restore();
@@ -248,5 +292,8 @@ class _JsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_JsPainter o) =>
-      o.knob != knob || o.active != active || o.pulse != pulse || o.accent != accent;
+      o.knob != knob ||
+      o.active != active ||
+      o.pulse != pulse ||
+      o.accent != accent;
 }

@@ -20,15 +20,25 @@ class _BindingsScreenState extends State<BindingsScreen> {
   Widget build(BuildContext context) {
     final ps = context.watch<ProfileService>();
     final profile = _selectedProfile ??
-        ps.profiles.firstWhere((p) => p.name == 'V-LINK', orElse: () => ps.profiles.first);
+        ps.profiles.firstWhere((p) => p.name == 'V-LINK',
+            orElse: () => ps.profiles.first);
 
     final sections = [
       ('MOVEMENT', ['walk', 'sprint', 'jump', 'crouch', 'slide']),
-      ('ABILITIES', ['ability1', 'ability2', 'ultimate', 'ability3', 'ability4']),
+      (
+        'ABILITIES',
+        ['ability1', 'ability2', 'ultimate', 'ability3', 'ability4']
+      ),
       ('COMBAT', ['fire', 'fire_left', 'ads', 'reload', 'quick_melee']),
       ('INTERACTION', ['interact', 'buymenu']),
-      ('COMMUNICATION', ['mic', 'speaker', 'chat', 'emoji', 'settings', 'scoreboard', 'map']),
-      ('WEAPON SLOTS', ['slot_primary', 'slot_pistol', 'slot_grenade', 'slot_knife']),
+      (
+        'COMMUNICATION',
+        ['mic', 'speaker', 'chat', 'emoji', 'settings', 'scoreboard', 'map']
+      ),
+      (
+        'WEAPON SLOTS',
+        ['slot_primary', 'slot_pistol', 'slot_grenade', 'slot_knife']
+      ),
     ];
 
     return Scaffold(
@@ -44,7 +54,7 @@ class _BindingsScreenState extends State<BindingsScreen> {
             child: Container(
           margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: T.bg2,
             border: Border(left: BorderSide(color: T.red, width: 3)),
           ),
@@ -63,7 +73,9 @@ class _BindingsScreenState extends State<BindingsScreen> {
               .expand((b) => b)
               .where((b) => sec.$2.contains(b.id))
               .toList();
-          if (sectionBindings.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+          if (sectionBindings.isEmpty) {
+            return const SliverToBoxAdapter(child: SizedBox.shrink());
+          }
           return SliverToBoxAdapter(
               child: _Section(
             title: sec.$1,
@@ -80,7 +92,8 @@ class _BindingsScreenState extends State<BindingsScreen> {
     );
   }
 
-  Widget _profileSelector(List<HudProfile> profiles) => DropdownButton<HudProfile>(
+  Widget _profileSelector(List<HudProfile> profiles) =>
+      DropdownButton<HudProfile>(
         value: _selectedProfile ?? profiles.first,
         dropdownColor: T.bg2,
         focusColor: Colors.transparent,
@@ -120,7 +133,8 @@ class _Section extends StatelessWidget {
             child: Row(children: [
               Container(width: 3, height: 12, color: T.red),
               const SizedBox(width: 8),
-              Text(title, style: T.mono(9, color: T.grey).copyWith(letterSpacing: 2)),
+              Text(title,
+                  style: T.mono(9, color: T.grey).copyWith(letterSpacing: 2)),
             ]),
           ),
           ...bindings.map((b) => KeyBindingRow(binding: b, onUpdate: onUpdate)),
@@ -146,7 +160,8 @@ class _SaveBar extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 14),
               color: T.red,
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Icon(Icons.save, color: Colors.white, size: 16),
                 const SizedBox(width: 8),
                 Text('SAVE PROFILE', style: T.raj(14)),
@@ -161,7 +176,8 @@ class _SaveBar extends StatelessWidget {
             child: Container(
               width: 46,
               height: 46,
-              decoration: BoxDecoration(color: T.bg2, border: Border.all(color: T.border)),
+              decoration: BoxDecoration(
+                  color: T.bg2, border: Border.all(color: T.border)),
               child: const Icon(Icons.refresh, color: T.grey, size: 20),
             ),
           ),

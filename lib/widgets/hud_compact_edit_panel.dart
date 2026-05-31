@@ -6,16 +6,16 @@ import 'color_picker_sheet.dart';
 /// Small and unobtrusive. Expands downward when a button is selected.
 /// Matches the reference Free Fire style: title bar + sliders below.
 class HudCompactEditPanel extends StatefulWidget {
-  final String?  selectedId;      // null = nothing selected
-  final String?  selectedLabel;
-  final double   btnSize;
-  final double   btnOpacity;
-  final double   sensitivity;     // mouse drag sensitivity
-  final String   accentHex;
-  final void Function(double)  onSizeChanged;
-  final void Function(double)  onOpacityChanged;
-  final void Function(double)  onSensitivityChanged;
-  final void Function(String)  onAccentChanged;
+  final String? selectedId; // null = nothing selected
+  final String? selectedLabel;
+  final double btnSize;
+  final double btnOpacity;
+  final double sensitivity; // mouse drag sensitivity
+  final String accentHex;
+  final void Function(double) onSizeChanged;
+  final void Function(double) onOpacityChanged;
+  final void Function(double) onSensitivityChanged;
+  final void Function(String) onAccentChanged;
   final void Function(String) onNameChanged;
   final VoidCallback onExit;
   final VoidCallback onRestore;
@@ -46,14 +46,16 @@ class HudCompactEditPanel extends StatefulWidget {
 class _HudCompactEditPanelState extends State<HudCompactEditPanel>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
-  late Animation<double>   _expand;
-  late TextEditingController _nameController; // Keeps track of text entry cleanly
+  late Animation<double> _expand;
+  late TextEditingController
+      _nameController; // Keeps track of text entry cleanly
   bool _expanded = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl   = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 200));
     _expand = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _nameController = TextEditingController(text: widget.selectedLabel ?? '');
   }
@@ -67,7 +69,8 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
       _ctrl.forward();
     }
     // Update layout label smoothly if changed from parent loop
-    if (widget.selectedLabel != old.selectedLabel && widget.selectedLabel != _nameController.text) {
+    if (widget.selectedLabel != old.selectedLabel &&
+        widget.selectedLabel != _nameController.text) {
       _nameController.text = widget.selectedLabel ?? '';
     }
   }
@@ -80,8 +83,12 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
   }
 
   Color get _accent {
-    try { return Color(int.parse('FF${widget.accentHex.replaceAll('#','')}', radix: 16)); }
-    catch (_) { return const Color(0xFFFF4655); }
+    try {
+      return Color(
+          int.parse('FF${widget.accentHex.replaceAll('#', '')}', radix: 16));
+    } catch (_) {
+      return const Color(0xFFFF4655);
+    }
   }
 
   void _toggleExpand() {
@@ -91,7 +98,8 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
 
   @override
   Widget build(BuildContext context) {
-    final isWidget = widget.selectedId == 'joystick' || widget.selectedId == 'weapon_bar';
+    final isWidget =
+        widget.selectedId == 'joystick' || widget.selectedId == 'weapon_bar';
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 320),
@@ -102,7 +110,6 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           // ── Top bar: HUD name + action buttons ──────────────────────────
           SizedBox(
             height: 36,
@@ -110,19 +117,24 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
               // Exit
               _TBtn(icon: Icons.logout, color: T.grey, onTap: widget.onExit),
               // Restore
-              _TBtn(icon: Icons.restore, color: T.gold, onTap: widget.onRestore),
+              _TBtn(
+                  icon: Icons.restore, color: T.gold, onTap: widget.onRestore),
               // Title / selected button name
-              Expanded(child: GestureDetector(
+              Expanded(
+                  child: GestureDetector(
                 onTap: _toggleExpand,
                 child: Container(
                   color: const Color(0x22FFFFFF),
-                  child: Center(child: Row(
+                  child: Center(
+                      child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         widget.selectedId != null
                             ? widget.selectedLabel ?? 'BUTTON'
-                            : _nameController.text.isNotEmpty ? _nameController.text : 'HUD 1',
+                            : _nameController.text.isNotEmpty
+                                ? _nameController.text
+                                : 'HUD 1',
                         style: T.raj(13, color: Colors.white),
                       ),
                       const SizedBox(width: 6),
@@ -133,7 +145,11 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                 ),
               )),
               // Save
-              _TBtn(icon: Icons.save, color: _accent, onTap: widget.onSave, filled: true),
+              _TBtn(
+                  icon: Icons.save,
+                  color: _accent,
+                  onTap: widget.onSave,
+                  filled: true),
             ]),
           ),
 
@@ -159,10 +175,14 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                   if (widget.selectedId != null)
                     _SliderRow(
                       label: 'SIZE',
-                      value: ((widget.btnSize - (isWidget ? 0.5 : 0.04)) / (isWidget ? 0.5 : 0.16)).clamp(0.0, 1.0),
+                      value: ((widget.btnSize - (isWidget ? 0.5 : 0.04)) /
+                              (isWidget ? 0.5 : 0.16))
+                          .clamp(0.0, 1.0),
                       display: '${(widget.btnSize * 100).round()}',
                       accent: _accent,
-                      onChanged: (v) => widget.onSizeChanged((isWidget ? 0.5 : 0.04) + v * (isWidget ? 0.5 : 0.16)),
+                      onChanged: (v) => widget.onSizeChanged(
+                          (isWidget ? 0.5 : 0.04) +
+                              v * (isWidget ? 0.5 : 0.16)),
                     ),
 
                   if (widget.selectedId != null)
@@ -180,7 +200,8 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                     value: ((widget.sensitivity - 0.5) / 9.5).clamp(0.0, 1.0),
                     display: '${widget.sensitivity.toStringAsFixed(1)}×',
                     accent: _accent,
-                    onChanged: (v) => widget.onSensitivityChanged(0.5 + v * 9.5),
+                    onChanged: (v) =>
+                        widget.onSensitivityChanged(0.5 + v * 9.5),
                   ),
 
                   const SizedBox(height: 4),
@@ -189,17 +210,21 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                   Row(children: [
                     Text('ACCENT', style: T.mono(8, color: T.grey)),
                     const SizedBox(width: 8),
-                    ...['#FF4655','#00E6C3','#FFD700','#FFFFFF','#4CAF50']
+                    ...['#FF4655', '#00E6C3', '#FFD700', '#FFFFFF', '#4CAF50']
                         .map((hex) {
-                      final c   = Color(int.parse('FF${hex.replaceAll('#','')}', radix: 16));
-                      final sel = hex.toUpperCase() == widget.accentHex.toUpperCase();
+                      final c = Color(
+                          int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
+                      final sel =
+                          hex.toUpperCase() == widget.accentHex.toUpperCase();
                       return GestureDetector(
                         onTap: () => widget.onAccentChanged(hex),
                         child: Container(
-                          width: 18, height: 18,
+                          width: 18,
+                          height: 18,
                           margin: const EdgeInsets.only(right: 5),
                           decoration: BoxDecoration(
-                            color: c, shape: BoxShape.circle,
+                            color: c,
+                            shape: BoxShape.circle,
                             border: Border.all(
                                 color: sel ? Colors.white : Colors.transparent,
                                 width: 1.5),
@@ -211,7 +236,8 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                     GestureDetector(
                       onTap: () => _showColorPicker(context),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                             color: T.bg3, border: Border.all(color: T.border)),
                         child: Text('MORE', style: T.mono(8, color: T.grey)),
@@ -231,12 +257,15 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                             onChanged: widget.onNameChanged,
                             style: T.mono(12, color: Colors.white),
                             decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: T.border, width: 1),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              enabledBorder: const OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: T.border, width: 1),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: _accent, width: 1),
+                                borderSide:
+                                    BorderSide(color: _accent, width: 1),
                               ),
                             ),
                           ),
@@ -268,53 +297,63 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
 
 // ── Toolbar icon button ───────────────────────────────────────────────────────
 class _TBtn extends StatelessWidget {
-  final IconData icon; final Color color;
-  final VoidCallback onTap; final bool filled;
-  const _TBtn({required this.icon, required this.color,
-      required this.onTap, this.filled = false});
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  final bool filled;
+  const _TBtn(
+      {required this.icon,
+      required this.color,
+      required this.onTap,
+      this.filled = false});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 38, height: 36,
-      color: filled ? color.withValues(alpha: 0.85) : Colors.transparent,
-      child: Icon(icon,
-          size: 16,
-          color: filled ? Colors.white : color),
-    ),
-  );
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 36,
+          color: filled ? color.withValues(alpha: 0.85) : Colors.transparent,
+          child: Icon(icon, size: 16, color: filled ? Colors.white : color),
+        ),
+      );
 }
 
 // ── Compact slider row ────────────────────────────────────────────────────────
 class _SliderRow extends StatelessWidget {
   final String label, display;
   final double value;
-  final Color  accent;
+  final Color accent;
   final ValueChanged<double> onChanged;
-  const _SliderRow({required this.label, required this.value,
-      required this.display, required this.accent, required this.onChanged});
+  const _SliderRow(
+      {required this.label,
+      required this.value,
+      required this.display,
+      required this.accent,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 4),
-    child: Row(children: [
-      SizedBox(width: 44, child: Text(label,
-          style: T.mono(8, color: T.grey))),
-      Expanded(child: SliderTheme(
-        data: SliderTheme.of(context).copyWith(
-          trackHeight: 2,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-          activeTrackColor: accent,
-          inactiveTrackColor: T.border,
-          thumbColor: accent,
-        ),
-        child: Slider(value: value, onChanged: onChanged),
-      )),
-      SizedBox(width: 36, child: Text(display,
-          style: T.mono(8, color: accent),
-          textAlign: TextAlign.right)),
-    ]),
-  );
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(children: [
+          SizedBox(
+              width: 44, child: Text(label, style: T.mono(8, color: T.grey))),
+          Expanded(
+              child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 2,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              activeTrackColor: accent,
+              inactiveTrackColor: T.border,
+              thumbColor: accent,
+            ),
+            child: Slider(value: value, onChanged: onChanged),
+          )),
+          SizedBox(
+              width: 36,
+              child: Text(display,
+                  style: T.mono(8, color: accent), textAlign: TextAlign.right)),
+        ]),
+      );
 }

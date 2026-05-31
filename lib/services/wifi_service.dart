@@ -5,25 +5,28 @@ import 'package:flutter/foundation.dart';
 import '../models/app_models.dart';
 
 class WifiService extends ChangeNotifier {
-  static const _port      = 4242;
+  static const _port = 4242;
   static const _broadcast = '255.255.255.255';
-  static const _pingMsg   = 'VLINK_CLIENT_PING';
-  static const _pongMsg   = 'VLINK_SERVER_ACK';
+  static const _pingMsg = 'VLINK_CLIENT_PING';
+  static const _pongMsg = 'VLINK_SERVER_ACK';
 
-  String  ip           = '192.168.4.1';
-  bool    discovering  = false;
+  String ip = '192.168.4.1';
+  bool discovering = false;
 
   RawDatagramSocket? _sock;
   RawDatagramSocket? _discSock;
-  ConnModel?         _conn;
-  Timer?             _discTimer;
+  ConnModel? _conn;
+  Timer? _discTimer;
 
   List<String> discoveredHosts = [];
 
   void attach(ConnModel c) => _conn = c;
   bool get connected => _sock != null;
 
-  void setIp(String v) { ip = v; notifyListeners(); }
+  void setIp(String v) {
+    ip = v;
+    notifyListeners();
+  }
 
   Future<void> startDiscovery() async {
     if (discovering) return;
@@ -33,7 +36,8 @@ class WifiService extends ChangeNotifier {
     _conn?.log('WiFi: Discovery started');
 
     try {
-      _discSock = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0, reuseAddress: true);
+      _discSock = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0,
+          reuseAddress: true);
       _discSock!.broadcastEnabled = true;
 
       _discSock!.listen((event) {
@@ -53,9 +57,11 @@ class WifiService extends ChangeNotifier {
       });
 
       _discTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-        _discSock?.send(utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
+        _discSock?.send(
+            utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
       });
-      _discSock!.send(utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
+      _discSock!
+          .send(utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
 
       Future.delayed(const Duration(seconds: 15), () {
         if (discovering) stopDiscovery();

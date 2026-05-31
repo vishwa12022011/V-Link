@@ -8,10 +8,10 @@ class HidService extends ChangeNotifier {
 
   // Dependencies
   WifiService? _wifiService;
-  ConnModel?   _connModel;
+  ConnModel? _connModel;
 
   // State
-  bool _btHidActive  = false;
+  bool _btHidActive = false;
   bool _usbHidActive = false;
   String? _btHidStatus;
   String? _usbHidStatus;
@@ -20,11 +20,11 @@ class HidService extends ChangeNotifier {
   bool _usbDebuggingEnabled = false;
 
   // Getters
-  bool   get btHidActive   => _btHidActive;
-  bool   get usbHidActive  => _usbHidActive;
-  String get btHidStatus   => _btHidStatus  ?? 'Not started';
-  String get usbHidStatus  => _usbHidStatus ?? 'Not connected';
-  String? get usbHostName  => _usbHostName;
+  bool get btHidActive => _btHidActive;
+  bool get usbHidActive => _usbHidActive;
+  String get btHidStatus => _btHidStatus ?? 'Not started';
+  String get usbHidStatus => _usbHidStatus ?? 'Not connected';
+  String? get usbHostName => _usbHostName;
   bool get usbConnected => _usbConnected;
   bool get usbDebuggingEnabled => _usbDebuggingEnabled;
 
@@ -34,14 +34,14 @@ class HidService extends ChangeNotifier {
 
   void attach(WifiService wifi, ConnModel conn) {
     _wifiService = wifi;
-    _connModel   = conn;
+    _connModel = conn;
   }
 
   Future<void> _onMethodCall(MethodCall call) async {
     switch (call.method) {
       case 'onBtHidStatus':
-        _btHidStatus  = call.arguments as String?;
-        _btHidActive  = _btHidStatus == 'connected';
+        _btHidStatus = call.arguments as String?;
+        _btHidActive = _btHidStatus == 'connected';
         notifyListeners();
         break;
       case 'onUsbHidStatus':
@@ -126,7 +126,7 @@ class HidService extends ChangeNotifier {
     if (!_btHidActive && !_usbHidActive) return;
     try {
       await _channel.invokeMethod('sendKey', {
-        'key':     key,
+        'key': key,
         'pressed': pressed,
       });
     } catch (_) {}

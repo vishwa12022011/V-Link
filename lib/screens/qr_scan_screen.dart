@@ -64,7 +64,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
         // Top bar
         Positioned(
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: 0,
+          right: 0,
           child: Container(
             padding: const EdgeInsets.fromLTRB(16, 52, 16, 16),
             decoration: BoxDecoration(
@@ -79,25 +81,29 @@ class _QrScanScreenState extends State<QrScanScreen> {
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     // UPDATED: Use withValues(alpha: ...)
                     color: T.bg1.withValues(alpha: 0.85),
                     border: Border.all(color: T.border),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.arrow_back_ios_new, color: T.grey, size: 12),
+                    const Icon(Icons.arrow_back_ios_new,
+                        color: T.grey, size: 12),
                     const SizedBox(width: 4),
                     Text('BACK', style: T.mono(9, color: T.grey)),
                   ]),
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(child: Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('SCAN QR CODE', style: T.orb(15)),
-                  Text('Point at the QR code displayed on your PC', style: T.mono(9, color: T.grey)),
+                  Text('Point at the QR code displayed on your PC',
+                      style: T.mono(9, color: T.grey)),
                 ],
               )),
             ]),
@@ -105,16 +111,21 @@ class _QrScanScreenState extends State<QrScanScreen> {
         ),
 
         // Centre status
-        Center(child: Column(
+        Center(
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 240),
             if (_scanned && webrtc.isConnecting)
               Row(mainAxisSize: MainAxisSize.min, children: [
-                const SizedBox(width: 16, height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: T.teal)),
+                const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: T.teal)),
                 const SizedBox(width: 10),
-                Text('Connecting via WebRTC…', style: T.mono(10, color: T.teal)),
+                Text('Connecting via WebRTC…',
+                    style: T.mono(10, color: T.teal)),
               ]),
             if (_error != null)
               Container(
@@ -125,7 +136,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   color: T.red.withValues(alpha: 0.15),
                   border: Border.all(color: T.red),
                 ),
-                child: Text(_error!, style: T.mono(10, color: T.red), textAlign: TextAlign.center),
+                child: Text(_error!,
+                    style: T.mono(10, color: T.red),
+                    textAlign: TextAlign.center),
               ),
           ],
         )),
@@ -139,8 +152,13 @@ class _ScanOverlayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // ... (Keep your existing painting logic here, just ensure no .withOpacity is used)
     // Example:
-    canvas.drawPath(Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)), 
-      Paint()..color = const Color(0xBB000000)..style = PaintingStyle.fill);
+    canvas.drawPath(
+        Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
+        Paint()
+          ..color = const Color(0xBB000000)
+          ..style = PaintingStyle.fill);
   }
-  @override bool shouldRepaint(_) => false;
+
+  @override
+  bool shouldRepaint(_) => false;
 }

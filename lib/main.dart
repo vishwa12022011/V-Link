@@ -22,24 +22,24 @@ class VconnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => BleService()),
-      ChangeNotifierProvider(create: (_) => WifiService()),
-      ChangeNotifierProvider(create: (_) => HidService()),
-      ChangeNotifierProvider(create: (_) => WebRtcService()),
-      ChangeNotifierProvider(create: (_) => ProfileService()),
-      ChangeNotifierProvider(create: (_) => WeaponSlotModel()),
-      ChangeNotifierProvider(create: (_) => VisualModel()),
-      ChangeNotifierProvider(create: (_) => ConnModel()),
-      ChangeNotifierProvider(create: (_) => HudEditModel()),
-    ],
-    child: MaterialApp(
-      title: 'V-CONN',
-      theme: T.dark,
-      home: const MainScreen(),
-      debugShowCheckedModeBanner: false,
-    ),
-  );
+        providers: [
+          ChangeNotifierProvider(create: (_) => BleService()),
+          ChangeNotifierProvider(create: (_) => WifiService()),
+          ChangeNotifierProvider(create: (_) => HidService()),
+          ChangeNotifierProvider(create: (_) => WebRtcService()),
+          ChangeNotifierProvider(create: (_) => ProfileService()),
+          ChangeNotifierProvider(create: (_) => WeaponSlotModel()),
+          ChangeNotifierProvider(create: (_) => VisualModel()),
+          ChangeNotifierProvider(create: (_) => ConnModel()),
+          ChangeNotifierProvider(create: (_) => HudEditModel()),
+        ],
+        child: MaterialApp(
+          title: 'V-CONN',
+          theme: T.dark,
+          home: const MainScreen(),
+          debugShowCheckedModeBanner: false,
+        ),
+      );
 }
 
 class MainScreen extends StatefulWidget {
@@ -52,7 +52,12 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _navIndex = 0;
 
-  final _screens = [    const ProfileVaultScreen(),    const BindingsScreen(),    const VisualEngineScreen(),    const ConnectivityScreen(),  ];
+  final _screens = [
+    const ProfileVaultScreen(),
+    const BindingsScreen(),
+    const VisualEngineScreen(),
+    const ConnectivityScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {

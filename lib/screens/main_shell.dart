@@ -18,8 +18,8 @@ class _MainShellState extends State<MainShell> {
 
   static const _tabs = [
     (Icons.folder_special_outlined, 'VAULT'),
-    (Icons.keyboard_outlined,       'BINDINGS'),
-    (Icons.bluetooth_outlined,      'CONNECT'),
+    (Icons.keyboard_outlined, 'BINDINGS'),
+    (Icons.bluetooth_outlined, 'CONNECT'),
   ];
 
   static const _screens = [
@@ -36,20 +36,20 @@ class _MainShellState extends State<MainShell> {
       backgroundColor: T.bg0,
       body: _screens[_tab],
       bottomNavigationBar: _NavBar(
-        selected:   _tab,
-        onTap:      (i) => setState(() => _tab = i),
+        selected: _tab,
+        onTap: (i) => setState(() => _tab = i),
         connStatus: conn.status,
-        accent:     const Color(0xFFFF4655),
+        accent: const Color(0xFFFF4655),
       ),
     );
   }
 }
 
 class _NavBar extends StatelessWidget {
-  final int        selected;
+  final int selected;
   final ValueChanged<int> onTap;
   final ConnStatus connStatus;
-  final Color      accent;
+  final Color accent;
 
   const _NavBar({
     required this.selected,
@@ -79,9 +79,10 @@ class _NavBar extends StatelessWidget {
         // Tabs
         ...List.generate(_MainShellState._tabs.length, (i) {
           final sel = i == selected;
-          return Expanded(child: GestureDetector(
-            onTap:     () => onTap(i),
-            behavior:  HitTestBehavior.opaque,
+          return Expanded(
+              child: GestureDetector(
+            onTap: () => onTap(i),
+            behavior: HitTestBehavior.opaque,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               decoration: BoxDecoration(
@@ -94,12 +95,10 @@ class _NavBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(_MainShellState._tabs[i].$1,
-                      size:  19,
-                      color: sel ? accent : T.greyDim),
+                      size: 19, color: sel ? accent : T.greyDim),
                   const SizedBox(height: 3),
                   Text(_MainShellState._tabs[i].$2,
-                      style: T.mono(8,
-                          color: sel ? accent : T.greyDim)),
+                      style: T.mono(8, color: sel ? accent : T.greyDim)),
                 ],
               ),
             ),
