@@ -1,96 +1,127 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-/// WebRTC service — handles both HID DataChannel and video stream.
-/// PC-side signaling server required (pc_server/server.js).
-/// This is a state model + placeholder; actual WebRTC peer connection
-/// will be wired in once flutter_webrtc is added to pubspec.
+enum WebRtcState { idle, connecting, connected, error }
+
 class WebRtcService extends ChangeNotifier {
-  WebRtcState state       = WebRtcState.idle;
-  String?     sessionUrl;  // signaling server URL from QR scan
-  String?     sessionToken;
-  String?     errorMsg;
+  // WebRTC & Signaling Objects
+  RTCPeerConnection? _peerConnection;
+  RTCDataChannel? _dataChannel;
+  IO.Socket? _socket;
+  final RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
+
+  // State Management
+  WebRtcState state = WebRtcState.idle;
+  String? sessionUrl;
+  String? sessionToken;
+  String? errorMsg;
 
   bool get isConnected => state == WebRtcState.connected;
   bool get isConnecting => state == WebRtcState.connecting;
 
-  // ── Connect from QR payload ────────────────────────────────────────────────
-  /// QR code contains JSON: {"url": "ws://192.168.1.x:3000", "token": "abc123"}
+  Future<void> init() async {
+    await remoteRenderer.initialize();
+  }
+
+  // Connect via QR Payload
   Future<void> connectFromQr(String qrPayload) async {
     try {
-      // Parse QR
       final parts = _parseQr(qrPayload);
-      sessionUrl   = parts['url'];
+      sessionUrl = parts['url'];
       sessionToken = parts['token'];
 
       state = WebRtcState.connecting;
       notifyListeners();
 
-      // TODO: implement actual WebRTC peer connection
-      // Steps:
-      //   1. Connect to signaling WebSocket at sessionUrl
-      //   2. Send session token for room join
-      //   3. Exchange SDP offer/answer
-      //   4. Exchange ICE candidates
-      //   5. Open DataChannel for HID events
-      //   6. Receive video track from PC screen capture
+      // 1. Initialize Signaling
+      _socket = IO.io(sessionUrl!, IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .build());
 
-      // Simulate connecting for now
-      await Future.delayed(const Duration(milliseconds: 800));
-      state = WebRtcState.connected;
-      notifyListeners();
+      // 2. Setup PeerConnection
+      final config = {
+        'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]
+      };
+      _peerConnection = await createPeerConnection(config);
+
+      // 3. Setup Data Channel
+      _dataChannel = await _peerConnection!.createDataChannel(
+          'hid-channel', RTCDataChannelInit()..ordered = false);
+      
+      _dataChannel!.onDataChannelState = (s) {
+        if (s == RTCDataChannelState.RTCDataChannelOpen) {
+          state = WebRtcState.connected;
+          notifyListeners();
+        }
+      };
+
+      // 4. Handle Incoming Video
+      _peerConnection!.onAddStream = (stream) {
+        remoteRenderer.srcObject = stream;
+        notifyListeners();
+      };
+
+      // 5. Connect Socket
+      _socket!.connect();
+      _socket!.onConnect((_) => print("Connected to signaling server"));
+
     } catch (e) {
-      state    = WebRtcState.error;
+      state = WebRtcState.error;
       errorMsg = e.toString();
       notifyListeners();
     }
   }
 
-  // ── Manual connect ─────────────────────────────────────────────────────────
-  Future<void> connectManual(String url, String token) async {
-    sessionUrl   = url;
-    sessionToken = token;
-    await connectFromQr('{"url":"$url","token":"$token"}');
+  // HID Input Methods
+  Future<void> sendKey(String key, {bool pressed = true}) async {
+    if (!isConnected) return;
+    _dataChannel?.send(RTCDataChannelMessage(jsonEncode({
+      "type": "keyboard",
+      "key": key,
+      "state": pressed ? "down" : "up"
+    })));
   }
 
-  // ── Disconnect ────────────────────────────────────────────────────────────
-  Future<void> disconnect() async {
-    state        = WebRtcState.idle;
-    sessionUrl   = null;
-    sessionToken = null;
-    errorMsg     = null;
+  Future<void> sendMouse(int dx, int dy) async {
+    if (!isConnected) return;
+    _dataChannel?.send(RTCDataChannelMessage(jsonEncode({
+      "type": "mouse",
+      "dx": dx,
+      "dy": dy
+    })));
+  }
+
+  void disconnect() {
+    _peerConnection?.close();
+    _peerConnection = null;
+    _socket?.disconnect();
+    state = WebRtcState.idle;
     notifyListeners();
   }
 
-  // ── Send HID key via DataChannel ──────────────────────────────────────────
-  Future<void> sendKey(String key, {bool pressed = true}) async {
-    if (!isConnected) return;
-    // TODO: send via RTCDataChannel
-    // dataChannel.send({'k': key, 's': pressed ? 1 : 0});
-  }
-
-  // ── Send mouse delta via DataChannel ─────────────────────────────────────
-  Future<void> sendMouse(int dx, int dy) async {
-    if (!isConnected) return;
-    // TODO: send via RTCDataChannel
-    // dataChannel.send({'t': 'mouse', 'dx': dx, 'dy': dy});
+  @override
+  void dispose() {
+    remoteRenderer.dispose();
+    disconnect();
+    super.dispose();
   }
 
   Map<String, String> _parseQr(String payload) {
-    // Expected: {"url":"ws://x.x.x.x:3000","token":"abc123"}
-    final url   = RegExp(r'"url"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
+    final url = RegExp(r'"url"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
     final token = RegExp(r'"token"\s*:\s*"([^"]+)"').firstMatch(payload)?.group(1) ?? '';
-    if (url.isEmpty) throw Exception('Invalid QR code — no URL found');
+    if (url.isEmpty) throw Exception('Invalid QR code');
     return {'url': url, 'token': token};
   }
 
   String get statusText {
     switch (state) {
-      case WebRtcState.idle:       return 'Not connected';
+      case WebRtcState.idle: return 'Not connected';
       case WebRtcState.connecting: return 'Connecting…';
-      case WebRtcState.connected:  return 'Connected via Wi-Fi (WebRTC)';
-      case WebRtcState.error:      return 'Error: ${errorMsg ?? "unknown"}';
+      case WebRtcState.connected: return 'Connected via WebRTC';
+      case WebRtcState.error: return 'Error: ${errorMsg ?? "unknown"}';
     }
   }
 }
-
-enum WebRtcState { idle, connecting, connected, error }

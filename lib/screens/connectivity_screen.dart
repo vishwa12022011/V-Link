@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+// Fixed: Removed unused import 'package:flutter_blue_plus/flutter_blue_plus.dart'; to fix the warning on Line 3
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/app_models.dart';
-import '../services/ble_service.dart';
-import '../services/wifi_service.dart';
-import '../services/hid_service.dart';
-import '../services/webrtc_service.dart';
-import '../utils/app_theme.dart';
+import 'package:vlink/models/app_models.dart';
+import 'package:vlink/services/ble_service.dart';
+import 'package:vlink/services/wifi_service.dart';
+import 'package:vlink/services/hid_service.dart';
+import 'package:vlink/services/webrtc_service.dart';
+import 'package:vlink/utils/app_theme.dart';
+import 'package:vlink/widgets/v_header.dart';
 import 'qr_scan_screen.dart';
 
-// ── Which sub-panel is open ───────────────────────────────────────────────────
 enum _HidMode   { none, bluetooth, wifi, usb }
 enum _MirrorMode{ none, webrtc, cast }
 
@@ -37,20 +37,17 @@ class _ConnState extends State<ConnectivityScreen> {
       backgroundColor: T.bg0,
       body: CustomScrollView(slivers: [
 
-        // Header
         SliverToBoxAdapter(child: VHeader(
           title: 'CONNECTIVITY',
           sub: 'V-LINK DEVICE MANAGER',
         )),
 
-        // ── SECTION 1: HID ────────────────────────────────────────────────
         SliverToBoxAdapter(child: _SectionLabel(
           icon: Icons.gamepad_outlined,
           title: 'HID',
           subtitle: 'Send keyboard & mouse inputs to your PC',
         )),
 
-        // Three HID option cards
         SliverToBoxAdapter(child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(children: [
@@ -65,7 +62,7 @@ class _ConnState extends State<ConnectivityScreen> {
                     ? _HidMode.none : _HidMode.bluetooth),
             ),
             if (_hidMode == _HidMode.bluetooth)
-              _BluetoothHidPanel(),
+              const _BluetoothHidPanel(),
             const SizedBox(height: 8),
 
             _BigOptionCard(
@@ -99,7 +96,6 @@ class _ConnState extends State<ConnectivityScreen> {
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-        // ── SECTION 2: Screen Mirroring ───────────────────────────────────
         SliverToBoxAdapter(child: _SectionLabel(
           icon: Icons.cast_outlined,
           title: 'SCREEN MIRRORING',
@@ -146,9 +142,6 @@ class _ConnState extends State<ConnectivityScreen> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SECTION LABEL
-// ══════════════════════════════════════════════════════════════════════════════
 class _SectionLabel extends StatelessWidget {
   final IconData icon;
   final String title, subtitle;
@@ -161,8 +154,9 @@ class _SectionLabel extends StatelessWidget {
       Container(
         width: 36, height: 36,
         decoration: BoxDecoration(
-          color: T.red.withOpacity(0.12),
-          border: Border.all(color: T.red.withOpacity(0.4)),
+          // Fixed: Swapped .withOpacity with .withValues to satisfy modern analyzer guidelines
+          color: T.red.withValues(alpha: 0.12),
+          border: Border.all(color: T.red.withValues(alpha: 0.4)),
         ),
         child: Icon(icon, color: T.red, size: 18),
       ),
@@ -175,9 +169,6 @@ class _SectionLabel extends StatelessWidget {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BIG OPTION CARD
-// ══════════════════════════════════════════════════════════════════════════════
 class _BigOptionCard extends StatelessWidget {
   final IconData icon;
   final Color    iconColor;
@@ -202,28 +193,28 @@ class _BigOptionCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? iconColor.withOpacity(0.10) : T.bg1,
+          // Fixed: Swapped .withOpacity with .withValues
+          color: selected ? iconColor.withValues(alpha: 0.10) : T.bg1,
           border: Border.all(
             color: selected ? iconColor : T.border,
             width: selected ? 1.5 : 1,
           ),
         ),
         child: Row(children: [
-          // Big logo icon
           Container(
             width: 52, height: 52,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.14),
+              // Fixed: Swapped .withOpacity with .withValues
+              color: iconColor.withValues(alpha: 0.14),
               shape: BoxShape.circle,
               border: Border.all(
-                color: iconColor.withOpacity(selected ? 0.8 : 0.4),
+                color: iconColor.withValues(alpha: selected ? 0.8 : 0.4),
                 width: selected ? 2 : 1.2,
               ),
             ),
             child: Icon(icon, color: iconColor, size: 26),
           ),
           const SizedBox(width: 14),
-          // Text
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -233,7 +224,8 @@ class _BigOptionCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    color: (badgeColor ?? T.teal).withOpacity(0.20),
+                    // Fixed: Swapped .withOpacity with .withValues
+                    color: (badgeColor ?? T.teal).withValues(alpha: 0.20),
                     child: Text(badge!, style: T.mono(8, color: badgeColor ?? T.teal)),
                   ),
                 ],
@@ -242,7 +234,6 @@ class _BigOptionCard extends StatelessWidget {
               Text(subtitle, style: T.mono(9, color: T.grey)),
             ],
           )),
-          // Arrow indicator
           Icon(
             selected ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
             color: selected ? iconColor : T.greyDim,
@@ -254,36 +245,49 @@ class _BigOptionCard extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BLUETOOTH HID PANEL
-// ══════════════════════════════════════════════════════════════════════════════
 class _BluetoothHidPanel extends StatelessWidget {
+  const _BluetoothHidPanel();
+
   @override
   Widget build(BuildContext context) {
-    final ble  = context.watch<BleService>();
+    final ble = context.watch<BleService>();
     final conn = context.watch<ConnModel>();
-    final hid  = context.watch<HidService>();
+    final hid = context.watch<HidService>();
+
+    final isAdvertising = hid.btHidStatus == 'Advertising...';
+    final isConnectedToHost = hid.btHidActive && !isAdvertising;
 
     return _SubPanel(children: [
-      // Phone-as-HID toggle
       _InfoRow(
         label: 'PHONE AS BT HID DEVICE',
-        sub: hid.btHidStatus,
+        sub: isConnectedToHost ? 'Connected' : hid.btHidStatus,
         statusColor: hid.btHidActive ? T.teal : T.greyDim,
-        action: hid.btHidActive
-            ? _ActionBtn('STOP',       T.grey,  () => context.read<HidService>().stopBluetoothHid())
-            : _ActionBtn('ADVERTISE',  T.red,   () => context.read<HidService>().startBluetoothHid()),
+        action: isConnectedToHost || isAdvertising
+            ? null
+            : _ActionBtn('ADVERTISE', T.red, () {
+                context.read<HidService>().startBluetoothHid();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Phone is advertising for 300 seconds...', style: T.mono(10)),
+                  backgroundColor: T.bg3,
+                  duration: const Duration(seconds: 4),
+                ));
+              }),
       ),
+      if (isConnectedToHost || isAdvertising)
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: _ActionBtn('STOP', T.grey, () => context.read<HidService>().stopBluetoothHid()),
+        ),
 
-      const Divider(color: T.border, height: 20),
+      const Divider(color: T.border, height: 24, thickness: 1),
+
       Text('OR CONNECT TO ESP32 VIA BLE', style: T.mono(8, color: T.greyDim).copyWith(letterSpacing: 2)),
-      const SizedBox(height: 10),
+      const SizedBox(height: 12),
 
-      // BLE scan row
       Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('AVAILABLE DEVICES', style: T.raj(14)),
-          Text(ble.scanning ? 'Started scanning…' : 'Press SCAN to search',
+          Text(ble.scanning ? 'Searching for devices…' : 'Press SCAN to search',
               style: T.mono(9, color: ble.scanning ? T.teal : T.greyDim)),
         ])),
         GestureDetector(
@@ -301,24 +305,42 @@ class _BluetoothHidPanel extends StatelessWidget {
         const Padding(padding: EdgeInsets.only(top: 6),
             child: LinearProgressIndicator(backgroundColor: T.border,
                 valueColor: AlwaysStoppedAnimation(T.teal), minHeight: 2)),
-      const SizedBox(height: 8),
+      const SizedBox(height: 12),
 
-      if (conn.isConnected)
+      if (conn.isConnected && conn.mode == Transport.ble)
         _DeviceTile(
           name: conn.deviceName ?? 'DEVICE', sub: '● CONNECTED', subColor: T.teal,
           actionLabel: 'DISCONNECT', isConnected: true,
           onTap: () => context.read<BleService>().disconnect(),
         ),
+
+      if (ble.pairedDevices.isNotEmpty)
+        ...ble.pairedDevices.map((d) {
+           final name = d.platformName.isNotEmpty ? d.platformName : d.remoteId.toString();
+           if (conn.isConnected && conn.mode == Transport.ble && name == conn.deviceName) return const SizedBox.shrink();
+           return _DeviceTile(
+              name: name,
+              sub: 'Paired Device', subColor: T.grey,
+              actionLabel: 'CONNECT', isConnected: false,
+              onTap: () => context.read<BleService>().connect(d),
+           );
+        }),
+
+      if (ble.discovered.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text('New devices', style: T.mono(10, color: T.greyDim)),
+        ),
       ...ble.discovered.map((r) {
-        final name = r.device.platformName.isNotEmpty
-            ? r.device.platformName : r.device.remoteId.str;
+        final name = r.device.platformName.isNotEmpty ? r.device.platformName : r.device.remoteId.toString();
         return _DeviceTile(
-          name: name, sub: 'BLE Device', subColor: T.greyDim,
+          name: name, sub: 'Available to pair', subColor: T.greyDim,
           actionLabel: 'PAIR', isConnected: false, rssi: r.rssi,
           onTap: () => context.read<BleService>().connect(r.device),
         );
       }),
-      if (ble.discovered.isEmpty && !conn.isConnected)
+
+      if (ble.discovered.isEmpty && ble.pairedDevices.isEmpty && !conn.isConnected)
         Center(child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text('No devices found. Press SCAN.',
@@ -328,9 +350,6 @@ class _BluetoothHidPanel extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// WIFI HID PANEL
-// ══════════════════════════════════════════════════════════════════════════════
 class _WifiHidPanel extends StatefulWidget {
   @override State<_WifiHidPanel> createState() => _WifiHidPanelState();
 }
@@ -351,7 +370,6 @@ class _WifiHidPanelState extends State<_WifiHidPanel> {
     final conn = context.watch<ConnModel>();
 
     return _SubPanel(children: [
-      // Scan row
       Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('LOCAL NETWORK DEVICES', style: T.raj(14)),
@@ -375,7 +393,6 @@ class _WifiHidPanelState extends State<_WifiHidPanel> {
                 valueColor: AlwaysStoppedAnimation(T.teal), minHeight: 2)),
       const SizedBox(height: 8),
 
-      // Discovered devices
       if (conn.isConnected && conn.mode == Transport.wifi)
         _DeviceTile(
           name: conn.deviceName ?? wifi.ip, sub: 'UDP :4242', subColor: T.teal,
@@ -415,13 +432,13 @@ class _WifiHidPanelState extends State<_WifiHidPanel> {
         )),
         const SizedBox(width: 8),
         GestureDetector(
-          onTap: wifi.connected
+          onTap: conn.isConnected && conn.mode == Transport.wifi
               ? () => context.read<WifiService>().disconnect()
               : () => context.read<WifiService>().connect(),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            color: wifi.connected ? T.bg3 : T.red,
-            child: Text(wifi.connected ? 'DISCONNECT' : 'CONNECT', style: T.raj(13)),
+            color: conn.isConnected && conn.mode == Transport.wifi ? T.bg3 : T.red,
+            child: Text(conn.isConnected && conn.mode == Transport.wifi ? 'DISCONNECT' : 'CONNECT', style: T.raj(13)),
           ),
         ),
       ]),
@@ -429,124 +446,129 @@ class _WifiHidPanelState extends State<_WifiHidPanel> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// USB HID PANEL
-// ══════════════════════════════════════════════════════════════════════════════
 class _UsbHidPanel extends StatefulWidget {
   @override State<_UsbHidPanel> createState() => _UsbHidPanelState();
 }
 
 class _UsbHidPanelState extends State<_UsbHidPanel> {
   bool _checking = false;
-  bool _usbDetected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => context.read<HidService>().checkUsbPrerequisites());
+  }
+
+  Future<void> _detectHost() async {
+    setState(() => _checking = true);
+    await context.read<HidService>().detectUsbHost();
+    if (mounted) {
+      setState(() => _checking = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final hid = context.watch<HidService>();
+    final pcName = hid.usbHostName;
+    final prerequisitesMet = hid.usbDebuggingEnabled && hid.usbConnected;
 
     return _SubPanel(children: [
-      // Phone-to-laptop icon
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.phone_android, color: T.grey, size: 32),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Column(children: [
-            Container(width: 40, height: 3, color: T.border),
-            const SizedBox(height: 3),
-            Text('USB', style: T.mono(8, color: T.greyDim)),
-            const SizedBox(height: 3),
-            Container(width: 40, height: 3, color: T.border),
-          ]),
-        ),
-        const Icon(Icons.laptop, color: T.grey, size: 32),
-      ]),
+      _PrerequisiteRow(label: 'USB Debugging Enabled', met: hid.usbDebuggingEnabled),
+      const SizedBox(height: 8),
+      _PrerequisiteRow(label: 'USB Cable Connected', met: hid.usbConnected),
+      const SizedBox(height: 14),
+      const Divider(color: T.border, height: 1, thickness: 1),
       const SizedBox(height: 14),
 
-      _InfoRow(
-        label: 'USB HID STATUS',
-        sub: hid.usbHidStatus,
-        statusColor: hid.usbHidActive ? T.teal : T.greyDim,
-        action: null,
-      ),
-      const SizedBox(height: 10),
-
-      // Detect USB
-      GestureDetector(
-        onTap: () async {
-          setState(() => _checking = true);
-          final detected = await context.read<HidService>().checkUsbConnected();
-          setState(() { _checking = false; _usbDetected = detected; });
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(color: T.bg3, border: Border.all(color: T.border)),
-          child: Center(child: _checking
-              ? const SizedBox(width: 16, height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: T.teal))
-              : Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.search, color: T.grey, size: 15),
-                  const SizedBox(width: 6),
-                  Text('DETECT USB CONNECTION', style: T.raj(13, color: T.grey)),
-                ])),
-        ),
-      ),
-
-      if (_usbDetected || hid.usbHidActive) ...[
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: T.teal.withOpacity(0.08),
-            border: Border.all(color: T.teal.withOpacity(0.4)),
-          ),
-          child: Row(children: [
-            Icon(Icons.check_circle, color: T.teal, size: 16),
-            const SizedBox(width: 8),
-            Expanded(child: Text('USB device detected. Ready to connect as HID.',
-                style: T.mono(9, color: T.teal))),
-          ]),
-        ),
-        const SizedBox(height: 10),
+      if (!hid.usbHidActive) ...[
         GestureDetector(
-          onTap: hid.usbHidActive
-              ? () => context.read<HidService>().stopUsbHid()
-              : () => context.read<HidService>().startUsbHid(),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            color: hid.usbHidActive ? T.bg3 : T.red,
-            child: Center(child: Text(
-              hid.usbHidActive ? 'STOP USB HID' : 'START USB HID',
-              style: T.raj(14))),
+          onTap: prerequisitesMet ? _detectHost : null,
+          child: Opacity(
+            opacity: prerequisitesMet ? 1.0 : 0.4,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(color: T.bg3, border: Border.all(color: T.border)),
+              child: Center(child: _checking
+                  ? const SizedBox(width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: T.teal))
+                  : Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.search, size: 15, color: prerequisitesMet ? T.grey : T.greyDim),
+                      const SizedBox(width: 6),
+                      Text('DETECT USB CONNECTION',
+                          style: T.raj(13, color: prerequisitesMet ? T.grey : T.greyDim)),
+                    ])),
+            ),
           ),
+        ),
+
+        if (pcName != null) ...[
+          const SizedBox(height: 10),
+          _DeviceTile(
+            icon: Icons.desktop_windows,
+            name: pcName,
+            sub: 'ADB Host PC detected',
+            subColor: T.teal,
+            actionLabel: 'CONNECT',
+            isConnected: false,
+            onTap: () => context.read<HidService>().startUsbHid(),
+          ),
+        ],
+
+        if (pcName == null && !_checking)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text('Enable the options above, then press Detect.',
+                style: T.mono(9, color: T.greyDim), textAlign: TextAlign.center),
+          ),
+      ] else ...[
+        _DeviceTile(
+          icon: Icons.desktop_windows,
+          name: pcName ?? 'Unknown PC',
+          sub: '● CONNECTED',
+          subColor: T.teal,
+          actionLabel: 'DISCONNECT',
+          isConnected: true,
+          onTap: () => context.read<HidService>().stopUsbHid(),
         ),
       ],
-
-      if (!_usbDetected && !hid.usbHidActive)
-        Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Text('Plug your phone into the PC via USB cable, then press Detect.',
-              style: T.mono(9, color: T.greyDim), textAlign: TextAlign.center),
-        ),
     ]);
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// WEBRTC PANEL
-// ══════════════════════════════════════════════════════════════════════════════
+class _PrerequisiteRow extends StatelessWidget {
+  final String label;
+  final bool met;
+
+  const _PrerequisiteRow({required this.label, required this.met});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Icon(
+        met ? Icons.check_box : Icons.check_box_outline_blank,
+        color: met ? T.teal : T.greyDim,
+        size: 20,
+      ),
+      const SizedBox(width: 10),
+      Text(label, style: T.raj(14, color: met ? T.white : T.greyDim)),
+    ]);
+  }
+}
+
+
 class _WebRtcPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final webrtc = context.watch<WebRtcService>();
 
     return _SubPanel(children: [
-      // Info banner
       Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF9C27B0).withOpacity(0.08),
+          // Fixed: Swapped .withOpacity with .withValues
+          color: const Color(0xFF9C27B0).withValues(alpha: 0.08),
           border: Border(left: BorderSide(color: const Color(0xFF9C27B0), width: 3)),
         ),
         child: Text(
@@ -558,12 +580,26 @@ class _WebRtcPanel extends StatelessWidget {
       ),
       const SizedBox(height: 14),
 
-      Text('STATUS: ${webrtc.statusText}',
-          style: T.mono(10, color: webrtc.isConnected ? T.teal : T.greyDim)),
+      Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: webrtc.isConnected ? Colors.green : T.greyDim,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            webrtc.isConnected ? 'Connected' : 'Not connected',
+            style: T.mono(10, color: webrtc.isConnected ? T.teal : T.greyDim),
+          ),
+        ],
+      ),
       const SizedBox(height: 14),
 
       if (!webrtc.isConnected) ...[
-        // Scan QR button
         GestureDetector(
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const QrScanScreen())),
@@ -579,7 +615,7 @@ class _WebRtcPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Center(child: Text('Run pc_server/server.js on your PC to get a QR code.',
+        Center(child: Text('Run the V-Link WebRTC to get the QR code.',
             style: T.mono(9, color: T.greyDim), textAlign: TextAlign.center)),
       ] else ...[
         GestureDetector(
@@ -596,9 +632,6 @@ class _WebRtcPanel extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// RECEIVE CAST PANEL
-// ══════════════════════════════════════════════════════════════════════════════
 class _CastPanel extends StatefulWidget {
   @override State<_CastPanel> createState() => _CastPanelState();
 }
@@ -618,12 +651,12 @@ class _CastPanelState extends State<_CastPanel> {
   @override
   Widget build(BuildContext context) {
     return _SubPanel(children: [
-      // Info message (dismissable)
       if (!_dismissed) ...[
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF00BCD4).withOpacity(0.08),
+            // Fixed: Swapped .withOpacity with .withValues
+            color: const Color(0xFF00BCD4).withValues(alpha: 0.08),
             border: Border(left: BorderSide(color: const Color(0xFF00BCD4), width: 3)),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -635,7 +668,6 @@ class _CastPanelState extends State<_CastPanel> {
               style: T.mono(9, color: T.grey),
             ),
             const SizedBox(height: 10),
-            // Don't show again checkbox
             GestureDetector(
               onTap: () async {
                 setState(() => _dontShow = !_dontShow);
@@ -666,7 +698,6 @@ class _CastPanelState extends State<_CastPanel> {
         const SizedBox(height: 14),
       ],
 
-      // HID channel selection reminder
       Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: T.bg3, border: Border.all(color: T.border)),
@@ -686,7 +717,8 @@ class _CastPanelState extends State<_CastPanel> {
       Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12),
-        color: const Color(0xFF00BCD4).withOpacity(0.15),
+        // Fixed: Swapped .withOpacity with .withValues
+        color: const Color(0xFF00BCD4).withValues(alpha: 0.15),
         child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.cast, color: Color(0xFF00BCD4), size: 18),
           const SizedBox(width: 8),
@@ -712,9 +744,6 @@ class _HidChip extends StatelessWidget {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SHARED SUB-PANEL WRAPPER
-// ══════════════════════════════════════════════════════════════════════════════
 class _SubPanel extends StatelessWidget {
   final List<Widget> children;
   const _SubPanel({required this.children});
@@ -731,15 +760,12 @@ class _SubPanel extends StatelessWidget {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SHARED WIDGETS
-// ══════════════════════════════════════════════════════════════════════════════
 class _InfoRow extends StatelessWidget {
   final String label, sub;
   final Color  statusColor;
   final Widget? action;
   const _InfoRow({required this.label, required this.sub,
-      required this.statusColor, required this.action});
+      required this.statusColor, this.action});
   @override
   Widget build(BuildContext context) => Row(children: [
     Container(width: 6, height: 6,
@@ -759,8 +785,9 @@ Widget _ActionBtn(String label, Color color, VoidCallback onTap) =>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          border: Border.all(color: color.withOpacity(0.5)),
+          // Fixed: Swapped .withOpacity with .withValues
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Text(label, style: T.mono(9, color: color)),
       ),
@@ -772,10 +799,11 @@ class _DeviceTile extends StatelessWidget {
   final bool   isConnected;
   final int?   rssi;
   final VoidCallback onTap;
+  final IconData? icon;
 
   const _DeviceTile({required this.name, required this.sub,
       required this.subColor, required this.actionLabel,
-      required this.isConnected, required this.onTap, this.rssi});
+      required this.isConnected, required this.onTap, this.rssi, this.icon});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -786,11 +814,12 @@ class _DeviceTile extends StatelessWidget {
       Container(
         width: 34, height: 34,
         decoration: BoxDecoration(
-          color: isConnected ? T.red.withOpacity(0.12) : T.bg3,
+          // Fixed: Swapped .withOpacity with .withValues
+          color: isConnected ? T.red.withValues(alpha: 0.12) : T.bg3,
           shape: BoxShape.circle,
           border: Border.all(color: isConnected ? T.red : T.border),
         ),
-        child: Icon(Icons.bluetooth, color: isConnected ? T.red : T.greyDim, size: 16),
+        child: Icon(icon ?? Icons.bluetooth, color: isConnected ? T.red : T.greyDim, size: 16),
       ),
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

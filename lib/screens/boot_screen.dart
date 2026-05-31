@@ -63,7 +63,7 @@ class _BootState extends State<BootScreen> with SingleTickerProviderStateMixin {
             child: Container(width: 300, height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [T.red.withOpacity(0.10), Colors.transparent]),
+                gradient: RadialGradient(colors: [T.red.withValues(alpha: 0.10), Colors.transparent]),
               )),
           ),
           Center(child: SingleChildScrollView(
@@ -81,7 +81,7 @@ class _BootState extends State<BootScreen> with SingleTickerProviderStateMixin {
                   ).createShader(r),
                   child: Text('V-LINK',
                     style: T.orb(52, color: Colors.white)
-                        .copyWith(shadows: [Shadow(color: T.red.withOpacity(0.5), blurRadius: 24)]),
+                        .copyWith(shadows: [Shadow(color: T.red.withValues(alpha: 0.5), blurRadius: 24)]),
                   ),
                 ),
                 Text('TACTICAL  HUD', style: T.raj(12, color: T.red).copyWith(letterSpacing: 8)),
@@ -184,7 +184,7 @@ class _GridPaint extends StatelessWidget {
 class _GridP extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = T.bg3.withOpacity(0.35)..strokeWidth = 0.5;
+    final p = Paint()..color = T.bg3.withValues(alpha: 0.35)..strokeWidth = 0.5;
     for (double x = 0; x < size.width;  x += 28) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
     }
@@ -219,11 +219,11 @@ class _RingP extends CustomPainter {
   void paint(Canvas canvas, Size s) {
     final c = Offset(s.width / 2, s.height / 2);
     final r = s.width / 2 - 4;
-    canvas.drawCircle(c, r, Paint()..style = PaintingStyle.stroke..color = T.red.withOpacity(0.2)..strokeWidth = 1.5);
+    canvas.drawCircle(c, r, Paint()..style = PaintingStyle.stroke..color = T.red.withValues(alpha: 0.2)..strokeWidth = 1.5);
     final rect = Rect.fromCircle(center: c, radius: r);
     canvas.drawArc(rect, -1.5708 + t * 6.2832, 1.4, false,
         Paint()..style = PaintingStyle.stroke..color = T.red..strokeWidth = 2..strokeCap = StrokeCap.round);
-    canvas.drawCircle(c, 5, Paint()..color = T.red.withOpacity(0.5 + 0.5 * ((t * 2) % 1.0)));
+    canvas.drawCircle(c, 5, Paint()..color = T.red.withValues(alpha: 0.5 + 0.5 * ((t * 2) % 1.0)));
   }
   @override bool shouldRepaint(_RingP o) => o.t != t;
 }

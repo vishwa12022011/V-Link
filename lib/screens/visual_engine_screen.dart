@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/app_models.dart';
-import '../utils/app_theme.dart';
+import 'package:vlink/models/visual_model.dart';
+import 'package:vlink/utils/app_theme.dart';
+import 'package:vlink/widgets/v_header.dart';
 
 class VisualEngineScreen extends StatelessWidget {
   const VisualEngineScreen({super.key});
@@ -17,20 +18,27 @@ class VisualEngineScreen extends StatelessWidget {
           sub: 'INTERFACE CONFIGURATION v2.04',
         )),
 
-        // Global appearance
         SliverToBoxAdapter(child: _Sec('GLOBAL APPEARANCE', Column(children: [
-          _Slider('INTERFACE OPACITY', vm.opacity, '${(vm.opacity*100).round()}%',
-              (v) => context.read<VisualModel>()..opacity = v..notifyAll()),
-          _Slider('GLOW INTENSITY', vm.glowIntensity, '${(vm.glowIntensity*100).round()}%',
-              (v) => context.read<VisualModel>()..glowIntensity = v..notifyAll()),
-          _Slider('HUD SCALE', (vm.hudScale-0.5)/1.5, '${vm.hudScale.toStringAsFixed(2)}×',
-              (v) => context.read<VisualModel>()..hudScale = 0.5+v*1.5..notifyAll()),
+          _Slider('INTERFACE OPACITY', vm.opacity, '${(vm.opacity * 100).round()}%', (v) {
+            final model = context.read<VisualModel>();
+            model.opacity = v;
+          }),
+          _Slider('GLOW INTENSITY', vm.glowIntensity, '${(vm.glowIntensity * 100).round()}%', (v) {
+            final model = context.read<VisualModel>();
+            model.glowIntensity = v;
+          }),
+          _Slider('HUD SCALE', (vm.hudScale - 0.5) / 1.5, '${vm.hudScale.toStringAsFixed(2)}×', (v) {
+            final model = context.read<VisualModel>();
+            model.hudScale = 0.5 + v * 1.5;
+          }),
         ]))),
 
-        // Accent colours
         SliverToBoxAdapter(child: _Sec('SYSTEM ACCENT', Row(
           children: List.generate(VisualModel.accents.length, (i) => GestureDetector(
-            onTap: () => context.read<VisualModel>()..accentIndex = i..notifyAll(),
+            onTap: () {
+              final model = context.read<VisualModel>();
+              model.accentIndex = i;
+            },
             child: Container(
               margin: const EdgeInsets.only(right: 10),
               width: 44, height: 44,
@@ -47,24 +55,34 @@ class VisualEngineScreen extends StatelessWidget {
           )),
         ))),
 
-        // Rendering FX
         SliverToBoxAdapter(child: _Sec('RENDERING & FX', Column(children: [
-          _Toggle('High Fidelity Shaders', 'Enable real-time ripple & blur effects',
-              vm.highFidelity, (v) => context.read<VisualModel>()..highFidelity = v..notifyAll()),
-          _Toggle('Brutalist Grid', 'Display alignment guides in editor',
-              vm.brutalistGrid, (v) => context.read<VisualModel>()..brutalistGrid = v..notifyAll()),
-          _Toggle('Dynamic Scaling', 'Resizes buttons based on touch pressure',
-              vm.dynamicScale, (v) => context.read<VisualModel>()..dynamicScale = v..notifyAll()),
+          _Toggle('High Fidelity Shaders', 'Enable real-time ripple & blur effects', vm.highFidelity, (v) {
+            final model = context.read<VisualModel>();
+            model.highFidelity = v;
+          }),
+          _Toggle('Brutalist Grid', 'Display alignment guides in editor', vm.brutalistGrid, (v) {
+            final model = context.read<VisualModel>();
+            model.brutalistGrid = v;
+          }),
+          _Toggle('Dynamic Scaling', 'Resizes buttons based on touch pressure', vm.dynamicScale, (v) {
+            final model = context.read<VisualModel>();
+            model.dynamicScale = v;
+          }),
         ]))),
 
-        // Typography
         SliverToBoxAdapter(child: _Sec('DATA TYPOGRAPHY', Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              _FontChip('TUNGSTEN',  vm.useOrbitron,  () => context.read<VisualModel>()..useOrbitron=true..notifyAll()),
+              _FontChip('TUNGSTEN', vm.useOrbitron, () {
+                final model = context.read<VisualModel>();
+                model.useOrbitron = true;
+              }),
               const SizedBox(width: 8),
-              _FontChip('DIN NEXT', !vm.useOrbitron, () => context.read<VisualModel>()..useOrbitron=false..notifyAll()),
+              _FontChip('DIN NEXT', !vm.useOrbitron, () {
+                final model = context.read<VisualModel>();
+                model.useOrbitron = false;
+              }),
             ]),
             const SizedBox(height: 12),
             Text('Typography effects readability in high-intensity combat scenarios.',
@@ -72,7 +90,6 @@ class VisualEngineScreen extends StatelessWidget {
           ],
         ))),
 
-        // Buttons
         SliverToBoxAdapter(child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
           child: Row(children: [
@@ -140,8 +157,12 @@ class _Slider extends StatelessWidget {
         Text(display, style: T.mono(10, color: T.red)),
       ]),
       const SizedBox(height: 6),
-      Slider(value: value.clamp(0.0,1.0), onChanged: onChanged,
-          activeColor: T.red, inactiveColor: T.border),
+      Slider(
+        value: value.clamp(0.0, 1.0), 
+        onChanged: onChanged,
+        activeColor: T.red, 
+        inactiveColor: T.border,
+      ),
     ]),
   );
 }
@@ -163,9 +184,14 @@ class _Toggle extends StatelessWidget {
         const SizedBox(height: 2),
         Text(sub, style: T.mono(9, color: T.greyDim)),
       ])),
-      Switch(value: value, onChanged: onChanged,
-          activeColor: T.red, inactiveThumbColor: T.greyDim,
-          inactiveTrackColor: T.bg0),
+      Switch(
+        value: value, 
+        onChanged: onChanged,
+        activeThumbColor: T.red,
+        activeTrackColor: T.red.withValues(alpha: 0.5),
+        inactiveThumbColor: T.greyDim,
+        inactiveTrackColor: T.bg0,
+      ),
     ]),
   );
 }
@@ -186,9 +212,4 @@ class _FontChip extends StatelessWidget {
       child: Text(label, style: T.raj(14, color: sel ? Colors.white : T.grey)),
     ),
   );
-}
-
-// Extension to allow chaining notifyListeners
-extension _VM on VisualModel {
-  void notifyAll() => notifyListeners();
 }

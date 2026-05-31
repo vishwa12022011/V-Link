@@ -16,6 +16,7 @@ class HudCompactEditPanel extends StatefulWidget {
   final void Function(double)  onOpacityChanged;
   final void Function(double)  onSensitivityChanged;
   final void Function(String)  onAccentChanged;
+  final void Function(String) onNameChanged;
   final VoidCallback onExit;
   final VoidCallback onRestore;
   final VoidCallback onSave;
@@ -32,6 +33,7 @@ class HudCompactEditPanel extends StatefulWidget {
     required this.onOpacityChanged,
     required this.onSensitivityChanged,
     required this.onAccentChanged,
+    required this.onNameChanged,
     required this.onExit,
     required this.onRestore,
     required this.onSave,
@@ -45,6 +47,7 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double>   _expand;
+  late TextEditingController _nameController; // Keeps track of text entry cleanly
   bool _expanded = false;
 
   @override
@@ -52,6 +55,7 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
     super.initState();
     _ctrl   = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
     _expand = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _nameController = TextEditingController(text: widget.selectedLabel ?? '');
   }
 
   @override
@@ -62,10 +66,18 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
       _expanded = true;
       _ctrl.forward();
     }
+    // Update layout label smoothly if changed from parent loop
+    if (widget.selectedLabel != old.selectedLabel && widget.selectedLabel != _nameController.text) {
+      _nameController.text = widget.selectedLabel ?? '';
+    }
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
 
   Color get _accent {
     try { return Color(int.parse('FF${widget.accentHex.replaceAll('#','')}', radix: 16)); }
@@ -79,6 +91,8 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
 
   @override
   Widget build(BuildContext context) {
+    final isWidget = widget.selectedId == 'joystick' || widget.selectedId == 'weapon_bar';
+
     return Container(
       constraints: const BoxConstraints(maxWidth: 320),
       decoration: BoxDecoration(
@@ -108,7 +122,7 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                       Text(
                         widget.selectedId != null
                             ? widget.selectedLabel ?? 'BUTTON'
-                            : 'HUD 1',
+                            : _nameController.text.isNotEmpty ? _nameController.text : 'HUD 1',
                         style: T.raj(13, color: Colors.white),
                       ),
                       const SizedBox(width: 6),
@@ -142,17 +156,15 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                       ),
                     ),
 
-                  // Size slider (only when button selected)
                   if (widget.selectedId != null)
                     _SliderRow(
                       label: 'SIZE',
-                      value: ((widget.btnSize - 0.04) / 0.16).clamp(0.0, 1.0),
+                      value: ((widget.btnSize - (isWidget ? 0.5 : 0.04)) / (isWidget ? 0.5 : 0.16)).clamp(0.0, 1.0),
                       display: '${(widget.btnSize * 100).round()}',
                       accent: _accent,
-                      onChanged: (v) => widget.onSizeChanged(0.04 + v * 0.16),
+                      onChanged: (v) => widget.onSizeChanged((isWidget ? 0.5 : 0.04) + v * (isWidget ? 0.5 : 0.16)),
                     ),
 
-                  // Opacity slider (only when button selected)
                   if (widget.selectedId != null)
                     _SliderRow(
                       label: 'OPACITY',
@@ -177,7 +189,6 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                   Row(children: [
                     Text('ACCENT', style: T.mono(8, color: T.grey)),
                     const SizedBox(width: 8),
-                    // Quick palette
                     ...['#FF4655','#00E6C3','#FFD700','#FFFFFF','#4CAF50']
                         .map((hex) {
                       final c   = Color(int.parse('FF${hex.replaceAll('#','')}', radix: 16));
@@ -207,6 +218,32 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
                       ),
                     ),
                   ]),
+                  if (widget.selectedId == null) ...[
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Text('NAME', style: T.mono(8, color: T.grey)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: SizedBox(
+                          height: 28,
+                          child: TextField(
+                            controller: _nameController,
+                            onChanged: widget.onNameChanged,
+                            style: T.mono(12, color: Colors.white),
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: T.border, width: 1),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: _accent, width: 1),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ]),
+                  ],
                 ],
               ),
             ),
@@ -241,7 +278,7 @@ class _TBtn extends StatelessWidget {
     onTap: onTap,
     child: Container(
       width: 38, height: 36,
-      color: filled ? color.withOpacity(0.85) : Colors.transparent,
+      color: filled ? color.withValues(alpha: 0.85) : Colors.transparent,
       child: Icon(icon,
           size: 16,
           color: filled ? Colors.white : color),

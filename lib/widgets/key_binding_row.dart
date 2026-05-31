@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reorderables/reorderables.dart'; // Added missing package import
 import '../models/app_models.dart';
 import '../utils/app_theme.dart';
 import 'qwerty_key_picker.dart';
@@ -55,7 +56,7 @@ class KeyBindingRow extends StatelessWidget {
               Container(
                 width: 40, height: 40,
                 decoration: BoxDecoration(
-                  color: hi ? T.red.withOpacity(0.15) : T.bg3,
+                  color: hi ? T.red.withValues(alpha: 0.15) : T.bg3, // Updated deprecation
                   border: Border.all(color: hi ? T.red : T.border),
                 ),
                 child: Icon(_ico(binding.icon),
@@ -71,15 +72,22 @@ class KeyBindingRow extends StatelessWidget {
                   Row(children: [
                     Text('Sequence: ', style: T.mono(9, color: T.greyDim)),
                     // Show each key as a small chip
-                    ...keys.map((k) => Container(
-                      margin: const EdgeInsets.only(right: 3),
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: T.bg3,
-                        border: Border.all(color: T.border),
+                    ...keys.asMap().entries.map((e) => Row(mainAxisSize: MainAxisSize.min, children:[
+                      if (e.key > 0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Text('+', style: T.mono(10, color: T.greyDim)),
+                        ),
+                      Container(
+                        margin: const EdgeInsets.only(right: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: T.bg3,
+                          border: Border.all(color: T.border),
+                        ),
+                        child: Text(e.value, style: T.mono(8, color: T.teal)),
                       ),
-                      child: Text(k, style: T.mono(8, color: T.teal)),
-                    )),
+                    ])),
                     if (binding.isHold)
                       Container(
                         margin: const EdgeInsets.only(left: 4),
@@ -214,16 +222,11 @@ class _RemapSheetState extends State<_RemapSheet>
                 const SizedBox(height: 2),
                 Text('Build a key sequence or combo', style: T.mono(9, color: T.grey)),
               ])),
-              GestureDetector(
+              WidgetKeybindingRowSaveButton(
                 onTap: () {
                   _onSave();
                   Navigator.pop(context);
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: T.red,
-                  child: Text('SAVE', style: T.raj(14)),
-                ),
               ),
             ]),
           ),
@@ -238,22 +241,36 @@ class _RemapSheetState extends State<_RemapSheet>
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('CURRENT COMBO', style: T.mono(8, color: T.grey)),
                 const SizedBox(height: 8),
-                Wrap(spacing: 6, runSpacing: 6,
-                  children: _combo.map((k) => GestureDetector(
-                    onTap: () => _removeKey(k),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: T.red.withOpacity(0.2),
-                        border: Border.all(color: T.red),
+                ReorderableWrap( 
+                  spacing: 6, runSpacing: 6,
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      final item = _combo.removeAt(oldIndex);
+                      _combo.insert(newIndex, item);
+                    });
+                  },
+                  children: _combo.asMap().entries.map((e) => Row(mainAxisSize: MainAxisSize.min, children:[
+                    if (e.key > 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Text('+', style: T.mono(10, color: T.greyDim)),
                       ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text(k, style: T.mono(11, color: T.white)),
-                        const SizedBox(width: 5),
-                        const Icon(Icons.close, size: 11, color: T.grey),
-                      ]),
+                    GestureDetector(
+                      onTap: () => _removeKey(e.value),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: T.red.withValues(alpha: 0.2), // Updated deprecation fixed here
+                          border: Border.all(color: T.red),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text(e.value, style: T.mono(11, color: T.white)),
+                          const SizedBox(width: 5),
+                          const Icon(Icons.close, size: 11, color: T.grey),
+                        ]),
+                      ),
                     ),
-                  )).toList(),
+                  ])).toList(),
                 ),
                 if (_combo.length > 1)
                   Padding(
@@ -276,7 +293,7 @@ class _RemapSheetState extends State<_RemapSheet>
               labelColor: T.red,
               unselectedLabelColor: T.grey,
               indicatorColor: T.red,
-              indicatorWeight: 2,
+              indicatorSize: TabBarIndicatorSize.tab,
               labelStyle: T.raj(13),
               tabs: const [
                 Tab(text: 'KEYBOARD'),
@@ -348,9 +365,9 @@ class _RemapSheetState extends State<_RemapSheet>
               ),
             ],
           )),
-        ]),
+        ],
       ),
-    );
+    ));
   }
 
   void _onSave() => widget.onSave(_comboStr, _isHold, _isToggle);
@@ -366,7 +383,7 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     decoration: BoxDecoration(
-      color: value ? T.red.withOpacity(0.08) : T.bg3,
+      color: value ? T.red.withValues(alpha: 0.08) : T.bg3, // Updated deprecation
       border: Border.all(color: value ? T.red : T.border),
     ),
     child: Row(children: [
@@ -377,9 +394,37 @@ class _OptionTile extends StatelessWidget {
         const SizedBox(height: 2),
         Text(sub, style: T.mono(9, color: T.greyDim)),
       ])),
-      Switch(value: value, onChanged: onChanged,
-          activeColor: T.red, inactiveThumbColor: T.greyDim,
-          inactiveTrackColor: T.bg0),
+      Switch(
+        value: value, 
+        onChanged: onChanged,
+        activeThumbColor: T.red, // Fixed deprecation warning cleanly here
+        inactiveTrackColor: T.bg0,
+        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) return T.red;
+          return T.greyDim; 
+        }),
+      ),
     ]),
   );
+}
+
+class WidgetKeybindingRowSaveButton extends StatelessWidget {
+  const WidgetKeybindingRowSaveButton({
+    super.key,
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: T.red,
+        child: Text('SAVE', style: T.raj(14)),
+      ),
+    );
+  }
 }

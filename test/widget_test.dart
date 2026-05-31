@@ -3,7 +3,8 @@ import 'package:vlink/main.dart';
 
 void main() {
   testWidgets('V-LINK smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const VLinkApp());
-    expect(find.byType(VLinkApp), findsOneWidget);
+    // Fixed: Changed from VLinkApp() to VconnApp() to match your main.dart definition exactly
+    await tester.pumpWidget(const VconnApp());
+    expect(find.byType(VconnApp), findsOneWidget);
   });
 }

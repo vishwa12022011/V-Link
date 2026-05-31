@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-// ══════════════════════════════════════════════════════════════════════════════
-// KEY BINDING
-// ══════════════════════════════════════════════════════════════════════════════
 class KeyBinding {
   final String id;
   final String label;
@@ -47,9 +44,6 @@ class KeyBinding {
       );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// HUD BUTTON CONFIG
-// ══════════════════════════════════════════════════════════════════════════════
 class HudBtn {
   final String id;
   final String bindId;
@@ -83,15 +77,12 @@ class HudBtn {
       );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// HUD PROFILE
-// ══════════════════════════════════════════════════════════════════════════════
 class HudProfile {
   String id, name, tag;
   int    latencyMs;
   String accentHex;
   double hudOpacity, hudScale, sensitivityScale;
-  List<KeyBinding> bindings;
+  Map<String, List<KeyBinding>> bindings;
   List<HudBtn>     buttons;
   DateTime         updatedAt;
 
@@ -104,8 +95,9 @@ class HudProfile {
     this.sensitivityScale = 1.8,
   });
 
+
   Color get accentColor {
-    try { return Color(int.parse('FF${accentHex.replaceAll('#','')}', radix: 16)); }
+    try { return Color(int.parse('FF${accentHex.replaceAll('#', '')}', radix: 16)); }
     catch (_) { return const Color(0xFFFF4655); }
   }
 
@@ -116,7 +108,8 @@ class HudProfile {
         hudOpacity:       (j['hudOpacity']       as num?)?.toDouble() ?? 0.85,
         hudScale:         (j['hudScale']         as num?)?.toDouble() ?? 1.0,
         sensitivityScale: (j['sensitivityScale'] as num?)?.toDouble() ?? 1.8,
-        bindings: (j['bindings'] as List).map((e) => KeyBinding.fromJson(e)).toList(),
+        bindings: (j['bindings'] as Map).map((k, v) => 
+          MapEntry(k, (v as List).map((e) => KeyBinding.fromJson(e)).toList())),
         buttons:  (j['buttons']  as List).map((e) => HudBtn.fromJson(e)).toList(),
         updatedAt: DateTime.tryParse(j['updatedAt'] ?? '') ?? DateTime.now(),
       );
@@ -126,72 +119,64 @@ class HudProfile {
         'latencyMs': latencyMs, 'accentHex': accentHex,
         'hudOpacity': hudOpacity, 'hudScale': hudScale,
         'sensitivityScale': sensitivityScale,
-        'bindings': bindings.map((b) => b.toJson()).toList(),
+        'bindings': bindings.map((k, v) => MapEntry(k, v.map((b) => b.toJson()).toList())),
         'buttons':  buttons.map((b)  => b.toJson()).toList(),
         'updatedAt': updatedAt.toIso8601String(),
       };
 
   static HudProfile get defaults {
-    final bindings = <KeyBinding>[
-      // Movement
-      const KeyBinding(id:'walk',        label:'Walk',           keySequence:'WASD',    icon:'joystick'),
-      const KeyBinding(id:'sprint',      label:'Sprint',         keySequence:'L-SHIFT', icon:'sprint',      isHold:true, isToggle:true),
-      const KeyBinding(id:'jump',        label:'Jump',           keySequence:'SPACE',   icon:'jump'),
-      const KeyBinding(id:'crouch',      label:'Crouch',         keySequence:'L-CTRL',  icon:'crouch'),
-      const KeyBinding(id:'slide',       label:'Slide',          keySequence:'C',       icon:'slide'),
-      // Abilities — now 4 total (Q, E, X + new C/Z slot)
-      const KeyBinding(id:'ability1',    label:'Ability 1',      keySequence:'E',       icon:'ability1'),
-      const KeyBinding(id:'ability2',    label:'Ability 2',      keySequence:'Q',       icon:'ability2'),
-      const KeyBinding(id:'ultimate',    label:'Ultimate',       keySequence:'X',       icon:'ultimate'),
-      const KeyBinding(id:'ability4',    label:'Ability 4',      keySequence:'Z',       icon:'ability4'),
-      // Combat
-      const KeyBinding(id:'fire',        label:'Fire (Right)',   keySequence:'Mouse_L', icon:'fire'),
-      const KeyBinding(id:'fire_left',   label:'Fire (Left)',    keySequence:'Mouse_L', icon:'fire'),
-      const KeyBinding(id:'ads',         label:'ADS / Scope',    keySequence:'Mouse_R', icon:'scope',       isHold:true, isToggle:true),
-      const KeyBinding(id:'reload',      label:'Reload',         keySequence:'R',       icon:'reload'),
-      const KeyBinding(id:'interact',    label:'Interact',       keySequence:'F',       icon:'interact'),   // hand reaching
-      const KeyBinding(id:'quick_melee', label:'Quick Melee',    keySequence:'G',       icon:'quick_melee'),// punching glove
-      const KeyBinding(id:'buymenu',     label:'Buy Menu',       keySequence:'B',       icon:'shop',        isToggle:true),
-      // Utility
-      const KeyBinding(id:'emoji',       label:'Emoji',          keySequence:'T',       icon:'emoji',       isToggle:true),
-      const KeyBinding(id:'map',         label:'Map Marker',     keySequence:'M',       icon:'mappin'),
-      const KeyBinding(id:'mic',         label:'Mic',            keySequence:'V',       icon:'mic',         isToggle:true),
-      const KeyBinding(id:'speaker',     label:'Speaker',        keySequence:'U',       icon:'speaker',     isToggle:true),
-      const KeyBinding(id:'settings',    label:'Settings',       keySequence:'ESC',     icon:'settings'),
-      const KeyBinding(id:'chat',        label:'Chat',           keySequence:'ENTER',   icon:'chat'),
-      const KeyBinding(id:'scoreboard',  label:'Scoreboard',     keySequence:'TAB',     icon:'scoreboard'),
-      // Weapon slots
-      const KeyBinding(id:'slot_primary', label:'Primary (AK47)',        keySequence:'1', icon:'primary'),
-      const KeyBinding(id:'slot_pistol',  label:'Pistol (Desert Eagle)', keySequence:'2', icon:'pistol'),
-      const KeyBinding(id:'slot_grenade', label:'Grenade',               keySequence:'4', icon:'grenade'),
-      const KeyBinding(id:'slot_knife',   label:'Knife (Melee)',          keySequence:'3', icon:'knife'),
-    ];
+    final bindings = {
+      'default': <KeyBinding>[
+        const KeyBinding(id:'walk',        label:'Walk',           keySequence:'WASD',    icon:'joystick'),
+        const KeyBinding(id:'sprint',      label:'Sprint',         keySequence:'L-SHIFT', icon:'sprint',      isHold:true, isToggle:true),
+        const KeyBinding(id:'jump',        label:'Jump',           keySequence:'SPACE',   icon:'jump'),
+        const KeyBinding(id:'crouch',      label:'Crouch',         keySequence:'L-CTRL',  icon:'crouch'),
+        const KeyBinding(id:'slide',       label:'Slide',          keySequence:'C',       icon:'slide'),
+        const KeyBinding(id:'ability1',    label:'Ability 1',      keySequence:'E',       icon:'ability1'),
+        const KeyBinding(id:'ability2',    label:'Ability 2',      keySequence:'Q',       icon:'ability2'),
+        const KeyBinding(id:'ultimate',    label:'Ultimate',       keySequence:'X',       icon:'ultimate'),
+        const KeyBinding(id:'ability3',    label:'Ability 3',      keySequence:'Z',       icon:'ability3'),
+        const KeyBinding(id:'ability4',    label:'Ability 4',      keySequence:'V',       icon:'ability4'),
+        const KeyBinding(id:'fire',        label:'Fire (Right)',   keySequence:'Mouse_L', icon:'fire'),
+        const KeyBinding(id:'fire_left',   label:'Fire (Left)',    keySequence:'Mouse_L', icon:'fire'),
+        const KeyBinding(id:'ads',         label:'ADS / Scope',    keySequence:'Mouse_R', icon:'scope',       isHold:true, isToggle:true),
+        const KeyBinding(id:'reload',      label:'Reload',         keySequence:'R',       icon:'reload'),
+        const KeyBinding(id:'interact',    label:'Interact',       keySequence:'F',       icon:'interact'),
+        const KeyBinding(id:'quick_melee', label:'Quick Melee',    keySequence:'G',       icon:'quick_melee'),
+        const KeyBinding(id:'buymenu',     label:'Buy Menu',       keySequence:'B',       icon:'shop',        isToggle:true),
+        const KeyBinding(id:'emoji',       label:'Emoji',          keySequence:'T',       icon:'emoji',       isToggle:true),
+        const KeyBinding(id:'map',         label:'Map Marker',     keySequence:'M',       icon:'mappin'),
+        const KeyBinding(id:'mic',         label:'Mic',            keySequence:'V',       icon:'mic',         isToggle:true),
+        const KeyBinding(id:'speaker',     label:'Speaker',        keySequence:'U',       icon:'speaker',     isToggle:true),
+        const KeyBinding(id:'settings',    label:'Settings',       keySequence:'ESC',     icon:'settings'),
+        const KeyBinding(id:'chat',        label:'Chat',           keySequence:'ENTER',   icon:'chat'),
+        const KeyBinding(id:'scoreboard',  label:'Scoreboard',     keySequence:'TAB',     icon:'scoreboard'),
+        const KeyBinding(id:'slot_primary', label:'Primary (AK47)', keySequence:'1', icon:'primary'),
+        const KeyBinding(id:'slot_pistol',  label:'Pistol (Desert Eagle)', keySequence:'2', icon:'pistol'),
+        const KeyBinding(id:'slot_grenade', label:'Grenade',        keySequence:'4', icon:'grenade'),
+        const KeyBinding(id:'slot_knife',   label:'Knife (Melee)',   keySequence:'3', icon:'knife'),
+      ],
+    };
 
     final buttons = [
-      // Left side
-      HudBtn(id:'b_walk',        bindId:'walk',        x:0.12, y:0.65, size:0.175),
       HudBtn(id:'b_sprint',      bindId:'sprint',      x:0.27, y:0.76, size:0.082),
       HudBtn(id:'b_mic',         bindId:'mic',         x:0.04, y:0.90, size:0.058),
       HudBtn(id:'b_speaker',     bindId:'speaker',     x:0.11, y:0.90, size:0.058),
       HudBtn(id:'b_scoreboard',  bindId:'scoreboard',  x:0.10, y:0.14, size:0.072),
-      // Top utilities
       HudBtn(id:'b_emoji',       bindId:'emoji',       x:0.68, y:0.07, size:0.058),
       HudBtn(id:'b_settings',    bindId:'settings',    x:0.76, y:0.07, size:0.058),
       HudBtn(id:'b_chat',        bindId:'chat',        x:0.68, y:0.18, size:0.058),
       HudBtn(id:'b_mappin',      bindId:'map',         x:0.76, y:0.18, size:0.058),
-      // Abilities — 4 buttons (Q, E, X, Z) in a 2×2 cluster top-right
-      HudBtn(id:'b_ability1',    bindId:'ability1',    x:0.82, y:0.18, size:0.088), // E
-      HudBtn(id:'b_ability2',    bindId:'ability2',    x:0.91, y:0.18, size:0.082), // Q
-      HudBtn(id:'b_ultimate',    bindId:'ultimate',    x:0.82, y:0.32, size:0.080), // X
-      HudBtn(id:'b_ability4',    bindId:'ability4',    x:0.91, y:0.32, size:0.076), // Z — new
-      // Actions
-      HudBtn(id:'b_interact',    bindId:'interact',    x:0.97, y:0.20, size:0.075), // hand icon
-      HudBtn(id:'b_quick_melee', bindId:'quick_melee', x:0.97, y:0.34, size:0.072), // glove icon
+      HudBtn(id:'b_ability1',    bindId:'ability1',    x:0.82, y:0.18, size:0.088),
+      HudBtn(id:'b_ability2',    bindId:'ability2',    x:0.91, y:0.18, size:0.082),
+      HudBtn(id:'b_ultimate',    bindId:'ultimate',    x:0.82, y:0.32, size:0.080),
+      HudBtn(id:'b_ability3',    bindId:'ability3',    x:0.91, y:0.32, size:0.076),
+      HudBtn(id:'b_interact',    bindId:'interact',    x:0.97, y:0.20, size:0.075),
+      HudBtn(id:'b_quick_melee', bindId:'quick_melee', x:0.97, y:0.34, size:0.072),
       HudBtn(id:'b_jump',        bindId:'jump',        x:0.63, y:0.33, size:0.082),
       HudBtn(id:'b_crouch',      bindId:'crouch',      x:0.60, y:0.60, size:0.082),
       HudBtn(id:'b_slide',       bindId:'slide',       x:0.70, y:0.75, size:0.072),
       HudBtn(id:'b_reload',      bindId:'reload',      x:0.53, y:0.50, size:0.076),
-      // Right combat
       HudBtn(id:'b_ads',         bindId:'ads',         x:0.88, y:0.38, size:0.090),
       HudBtn(id:'b_fire',        bindId:'fire',        x:0.88, y:0.62, size:0.115),
       HudBtn(id:'b_fire_left',   bindId:'fire_left',   x:0.35, y:0.76, size:0.090),
@@ -200,7 +185,7 @@ class HudProfile {
 
     return HudProfile(
       id: const Uuid().v4(),
-      name: 'VALORANT_PRO_V1', tag: 'ESP32-S3-HID',
+      name: 'V-LINK', tag: 'free fire',
       latencyMs: 1, accentHex: '#FF4655',
       hudOpacity: 0.85, hudScale: 1.0, sensitivityScale: 1.8,
       bindings: bindings, buttons: buttons, updatedAt: DateTime.now(),
@@ -215,9 +200,6 @@ class HudProfile {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// WEAPON MODELS
-// ══════════════════════════════════════════════════════════════════════════════
 enum WeaponType { primary, pistol, grenade, knife }
 
 class WeaponDef {
@@ -265,15 +247,14 @@ class WeaponSlotModel extends ChangeNotifier {
     if (i >= 0) { _weapons[i] = _weapons[i].copyWith(keySequence: key); notifyListeners(); }
   }
   void setAccent(Color c)    { accentColor = c; notifyListeners(); }
-  void syncFromBindings(List<KeyBinding> bindings) {
+  void syncFromBindings(Map<String, List<KeyBinding>> bindings) {
     const m = {'slot_primary':'primary','slot_pistol':'pistol','slot_grenade':'grenade','slot_knife':'knife'};
-    for (final b in bindings) { final w = m[b.id]; if (w != null) remapWeapon(w, b.keySequence); }
+    for (final b in bindings.values.expand((b) => b)) {
+       final w = m[b.id]; if (w != null) remapWeapon(w, b.keySequence);
+    }
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// STATE MODELS
-// ══════════════════════════════════════════════════════════════════════════════
 class ToggleStateModel extends ChangeNotifier {
   final Map<String, bool> _s = {};
   bool isOn(String id) => _s[id] ?? false;
@@ -282,7 +263,7 @@ class ToggleStateModel extends ChangeNotifier {
   void reset() { _s.clear(); notifyListeners(); }
 }
 
-enum Transport  { ble, wifi }
+enum Transport  { ble, wifi, usb }
 enum ConnStatus { disconnected, scanning, connecting, connected }
 
 class ConnModel extends ChangeNotifier {
@@ -293,8 +274,11 @@ class ConnModel extends ChangeNotifier {
   final List<String> logs = [];
   bool get isConnected => status == ConnStatus.connected;
   void setMode(Transport m)  { mode = m; notifyListeners(); }
-  void setStatus(ConnStatus s, {String? device}) {
-    status = s; if (device != null) deviceName = device; notifyListeners();
+  void setStatus(ConnStatus s, {String? device, Transport? mode}) {
+    status = s;
+    if (device != null) deviceName = device;
+    if (mode != null) this.mode = mode;
+    notifyListeners();
   }
   void log(String line) {
     final t = DateTime.now();

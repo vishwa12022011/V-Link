@@ -2,7 +2,7 @@ name: vlink
 description: V-LINK Tactical HUD — ESP32 BLE/WiFi HID Controller
 
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -31,6 +31,12 @@ dependencies:
 
   # QR generation
   qr_flutter: 4.1.0
+  reorderables: ^0.6.0
+
+  # WebRTC Dependencies
+  flutter_webrtc: ^0.10.3
+  socket_io_client: ^3.0.0
+  permission_handler: ^11.0.0
 
 dev_dependencies:
   flutter_test:

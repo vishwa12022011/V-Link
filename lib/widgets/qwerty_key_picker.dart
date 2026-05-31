@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 
 /// Full QWERTY keyboard grid for the bindings remap screen.
-/// Every key including L/R modifiers, F-keys, and a Hold toggle.
 class QwertyKeyPicker extends StatefulWidget {
-  final String      currentKey;
-  final bool        currentIsHold;
+  final String currentKey;
+  final bool currentIsHold;
   final void Function(String key, bool isHold) onSelect;
 
   const QwertyKeyPicker({
@@ -21,30 +20,23 @@ class QwertyKeyPicker extends StatefulWidget {
 
 class _QwertyKeyPickerState extends State<QwertyKeyPicker> {
   late String _sel;
-  late bool   _hold;
+  late bool _hold;
 
   @override
   void initState() {
     super.initState();
-    _sel  = widget.currentKey;
+    _sel = widget.currentKey;
     _hold = widget.currentIsHold;
   }
 
   static const _rows = [
-    // Row 0 — F keys
     ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'],
-    // Row 1 — numbers
     ['1','2','3','4','5','6','7','8','9','0','-','='],
-    // Row 2
     ['Q','W','E','R','T','Y','U','I','O','P','[',']'],
-    // Row 3
     ['A','S','D','F','G','H','J','K','L',';',"'"],
-    // Row 4
     ['Z','X','C','V','B','N','M',',','.','/'],
-    // Row 5 — special
     ['L-SHIFT','R-SHIFT','L-CTRL','R-CTRL','L-ALT','R-ALT',
      'SPACE','TAB','CAPS','ENTER','BACKSPACE','ESC'],
-    // Row 6 — mouse
     ['Mouse_L','Mouse_R','Mouse_M'],
   ];
 
@@ -59,7 +51,8 @@ class _QwertyKeyPickerState extends State<QwertyKeyPicker> {
           margin: const EdgeInsets.only(bottom: 14),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: _hold ? T.red.withOpacity(0.15) : T.bg3,
+            // FIXED: Replaced withOpacity with withValues(alpha: ...)
+            color: _hold ? T.red.withValues(alpha: 0.15) : T.bg3,
             border: Border.all(color: _hold ? T.red : T.border),
           ),
           child: Row(children: [
@@ -76,9 +69,11 @@ class _QwertyKeyPickerState extends State<QwertyKeyPicker> {
                 setState(() => _hold = v);
                 widget.onSelect(_sel, _hold);
               },
-              activeColor: T.red,
-              inactiveThumbColor: T.greyDim,
-              inactiveTrackColor: T.bg0,
+              // FIXED: Replaced activeColor with track/thumb colors using WidgetStateProperty
+              trackColor: WidgetStateProperty.resolveWith((states) => 
+                states.contains(WidgetState.selected) ? T.red : T.bg0),
+              thumbColor: WidgetStateProperty.resolveWith((states) => 
+                states.contains(WidgetState.selected) ? Colors.white : T.greyDim),
             ),
           ]),
         ),

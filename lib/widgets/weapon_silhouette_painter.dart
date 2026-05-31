@@ -183,7 +183,8 @@ class WeaponSilhouettePainter extends CustomPainter {
         Paint()..color = p.color..style = PaintingStyle.stroke..strokeWidth = s*0.06);
     // Segment lines
     final lp = Paint()
-      ..color = p.color.withOpacity(0.4)
+      // FIXED: withValues(alpha: ...)
+      ..color = p.color.withValues(alpha: 0.4)
       ..strokeWidth = s*0.03
       ..style = PaintingStyle.stroke;
     canvas.drawLine(Offset(-s*0.27, 0), Offset(s*0.27, 0), lp);

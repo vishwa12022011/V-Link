@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import '../models/app_models.dart';
-import '../services/profile_service.dart';
-import '../utils/app_theme.dart';
+import 'package:vlink/models/app_models.dart';
+import 'package:vlink/services/profile_service.dart';
+import 'package:vlink/utils/app_theme.dart';
+import 'package:vlink/widgets/v_header.dart';
 import 'controller_screen.dart';
 
-class ProfileVaultScreen extends StatelessWidget {
+class ProfileVaultScreen extends StatefulWidget {
   const ProfileVaultScreen({super.key});
+
+  @override
+  State<ProfileVaultScreen> createState() => _ProfileVaultScreenState();
+}
+
+class _ProfileVaultScreenState extends State<ProfileVaultScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     final ps = context.watch<ProfileService>();
+    final profiles = ps.profiles
+        .where((p) =>
+            p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
 
     return Scaffold(
       backgroundColor: T.bg0,
@@ -21,20 +33,24 @@ class ProfileVaultScreen extends StatelessWidget {
           sub: 'ENCRYPTED CONFIGURATION STORAGE',
           trailing: _stats(ps),
         )),
-        SliverToBoxAdapter(child: _SearchAdd(onAdd: () => _addProfile(context, ps))),
+        SliverToBoxAdapter(child: _SearchAdd(
+          onAdd: () => _addProfile(context, ps),
+          onSearchChanged: (q) => setState(() => _searchQuery = q),
+        )),
         SliverList(delegate: SliverChildBuilderDelegate(
           (_, i) => _ProfileCard(
-            profile: ps.profiles[i],
-            isActive: ps.active?.id == ps.profiles[i].id,
+            profile: profiles[i],
+            isActive: ps.active?.id == profiles[i].id,
             onDeploy: () {
-              ps.setActive(ps.profiles[i]);
+              ps.setActive(profiles[i]);
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ControllerScreen(profile: ps.profiles[i]),
+                builder: (_) => ControllerScreen(profile: profiles[i]),
               ));
             },
-            onDelete: () => ps.delete(ps.profiles[i].id),
+            onDelete: () => ps.delete(profiles[i].id),
+            onRename: () => _showRenameDialog(context, ps, profiles[i]),
           ),
-          childCount: ps.profiles.length,
+          childCount: profiles.length,
         )),
         SliverToBoxAdapter(child: _SyncBar()),
         const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -51,9 +67,17 @@ class ProfileVaultScreen extends StatelessWidget {
   ]);
 
   void _addProfile(BuildContext ctx, ProfileService ps) {
+    final vLinkProfiles = ps.profiles.where((p) => p.name.startsWith('V-LINK')).toList();
+    final nextNum = (vLinkProfiles.isEmpty)
+        ? 1
+        : vLinkProfiles
+                .map((p) => int.tryParse(p.name.replaceAll('V-LINK', '')) ?? 0)
+                .fold(0, (max, e) => e > max ? e : max) + 1;
+    final name = (nextNum == 1) ? 'V-LINK' : 'V-LINK$nextNum';
+
     final p = HudProfile(
       id: const Uuid().v4(),
-      name: 'CUSTOM_${ps.profiles.length + 1}',
+      name: name,
       tag: 'ESP32',
       latencyMs: 2,
       accentHex: '#FF4655',
@@ -62,6 +86,41 @@ class ProfileVaultScreen extends StatelessWidget {
       updatedAt: DateTime.now(),
     );
     ps.save(p);
+  }
+
+  void _showRenameDialog(BuildContext context, ProfileService ps, HudProfile profile) {
+    final controller = TextEditingController(text: profile.name);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: T.bg2,
+        title: Text('Rename Profile', style: T.orb(16)),
+        content: TextField(
+          controller: controller, autofocus: true, style: T.raj(14),
+          decoration: InputDecoration(
+            hintText: 'Enter new name', hintStyle: T.mono(12, color: T.greyDim),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: T.red)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('CANCEL', style: T.mono(11, color: T.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              final newName = controller.text;
+              if (newName.isNotEmpty) {
+                profile.name = newName;
+                ps.save(profile);
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text('SAVE', style: T.mono(11, color: T.red)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -81,7 +140,8 @@ class _Stat extends StatelessWidget {
 
 class _SearchAdd extends StatelessWidget {
   final VoidCallback onAdd;
-  const _SearchAdd({required this.onAdd});
+  final ValueChanged<String> onSearchChanged;
+  const _SearchAdd({required this.onAdd, required this.onSearchChanged});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -90,6 +150,7 @@ class _SearchAdd extends StatelessWidget {
       Expanded(child: Container(
         decoration: BoxDecoration(color: T.bg2, border: Border.all(color: T.border)),
         child: TextField(
+          onChanged: onSearchChanged,
           style: T.raj(14),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -113,9 +174,9 @@ class _SearchAdd extends StatelessWidget {
 class _ProfileCard extends StatelessWidget {
   final HudProfile profile;
   final bool isActive;
-  final VoidCallback onDeploy, onDelete;
+  final VoidCallback onDeploy, onDelete, onRename;
   const _ProfileCard({required this.profile, required this.isActive,
-    required this.onDeploy, required this.onDelete});
+    required this.onDeploy, required this.onDelete, required this.onRename});
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +232,8 @@ class _ProfileCard extends StatelessWidget {
           child: Row(children: [
             _ico(Icons.share, () {}),
             const SizedBox(width: 14),
+            _ico(Icons.edit_outlined, onRename),
+            const SizedBox(width: 14),
             _ico(Icons.delete_outline, onDelete),
             const Spacer(),
             GestureDetector(
@@ -203,7 +266,7 @@ class _PixelPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = [T.bg0, T.red.withOpacity(0.6), T.teal.withOpacity(0.4), T.bg3];
+    final palette = [T.bg0, T.red.withValues(alpha: 0.6), T.teal.withValues(alpha: 0.4), T.bg3];
     return SizedBox(
       width: 52, height: 52,
       child: GridView.builder(
@@ -225,7 +288,7 @@ class _SyncBar extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     decoration: BoxDecoration(
       color: T.bg2,
-      border: Border.all(color: T.teal.withOpacity(0.4)),
+      border: Border.all(color: T.teal.withValues(alpha: 0.4)),
     ),
     child: Row(children: [
       const Icon(Icons.cloud_sync, color: T.teal, size: 16),

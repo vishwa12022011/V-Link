@@ -7,14 +7,14 @@ import '../models/app_models.dart';
 class WifiService extends ChangeNotifier {
   static const _port      = 4242;
   static const _broadcast = '255.255.255.255';
-  static const _pingMsg   = 'VLINK_DISCOVER';
-  static const _pongMsg   = 'VLINK_HERE';
+  static const _pingMsg   = 'VLINK_CLIENT_PING';
+  static const _pongMsg   = 'VLINK_SERVER_ACK';
 
   String  ip           = '192.168.4.1';
   bool    discovering  = false;
 
-  RawDatagramSocket? _sock;       // send/receive socket
-  RawDatagramSocket? _discSock;   // discovery socket
+  RawDatagramSocket? _sock;
+  RawDatagramSocket? _discSock;
   ConnModel?         _conn;
   Timer?             _discTimer;
 
@@ -25,21 +25,17 @@ class WifiService extends ChangeNotifier {
 
   void setIp(String v) { ip = v; notifyListeners(); }
 
-  // ── UDP Broadcast Discovery ───────────────────────────────────────────────
   Future<void> startDiscovery() async {
     if (discovering) return;
     discovering = true;
     discoveredHosts.clear();
     notifyListeners();
-    _conn?.log('WiFi: Discovery started — broadcasting on :$_port');
+    _conn?.log('WiFi: Discovery started');
 
     try {
-      _discSock = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv4, 0,
-          reuseAddress: true);
+      _discSock = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0, reuseAddress: true);
       _discSock!.broadcastEnabled = true;
 
-      // Listen for VLINK_HERE responses
       _discSock!.listen((event) {
         if (event == RawSocketEvent.read) {
           final dg = _discSock!.receive();
@@ -56,19 +52,11 @@ class WifiService extends ChangeNotifier {
         }
       });
 
-      // Send broadcast ping every 2 s for 15 s
       _discTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-        _discSock?.send(
-          utf8.encode(_pingMsg),
-          InternetAddress(_broadcast),
-          _port,
-        );
+        _discSock?.send(utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
       });
-      // Send immediately
-      _discSock!.send(
-          utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
+      _discSock!.send(utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
 
-      // Auto-stop after 15 s
       Future.delayed(const Duration(seconds: 15), () {
         if (discovering) stopDiscovery();
       });
@@ -84,24 +72,22 @@ class WifiService extends ChangeNotifier {
     _discTimer?.cancel();
     _discSock?.close();
     _discSock = null;
-    _conn?.log('WiFi: Discovery stopped — ${discoveredHosts.length} host(s) found');
+    _conn?.log('WiFi: Discovery stopped');
     notifyListeners();
   }
 
-  // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
     if (discovering) await stopDiscovery();
     try {
       _sock = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      _conn?.setStatus(ConnStatus.connected, device: ip);
-      _conn?.log('WiFi: UDP socket bound → $ip:$_port');
+      _conn?.setStatus(ConnStatus.connected, device: ip, mode: Transport.wifi);
+      _conn?.log('WiFi: UDP socket bound to $ip:$_port');
       notifyListeners();
     } catch (e) {
       _conn?.log('WiFi connect error: $e');
     }
   }
 
-  // ── Disconnect ────────────────────────────────────────────────────────────
   Future<void> disconnect() async {
     _sock?.close();
     _sock = null;
@@ -110,25 +96,29 @@ class WifiService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Send key packet ───────────────────────────────────────────────────────
   Future<void> sendKey(String key, {bool pressed = true}) async {
     if (_sock == null) return;
+    final packet = {
+      "type": "keyboard",
+      "key": key,
+      "state": pressed ? "down" : "up"
+    };
     try {
-      _sock!.send(
-        utf8.encode(jsonEncode({'k': key, 's': pressed ? 1 : 0})),
-        InternetAddress(ip), _port,
-      );
+      _sock!.send(utf8.encode(jsonEncode(packet)), InternetAddress(ip), _port);
     } catch (_) {}
   }
 
-  // ── Send mouse delta ──────────────────────────────────────────────────────
-  Future<void> sendMouse(int dx, int dy) async {
+  Future<void> sendMouse(int dx, int dy, {String? lmb, String? rmb}) async {
     if (_sock == null) return;
+    final packet = {
+      "type": "mouse",
+      "dx": dx,
+      "dy": dy,
+      if (lmb != null) 'LMB': lmb,
+      if (rmb != null) 'RMB': rmb,
+    };
     try {
-      _sock!.send(
-        utf8.encode(jsonEncode({'t': 'mouse', 'dx': dx, 'dy': dy})),
-        InternetAddress(ip), _port,
-      );
+      _sock!.send(utf8.encode(jsonEncode(packet)), InternetAddress(ip), _port);
     } catch (_) {}
   }
 }

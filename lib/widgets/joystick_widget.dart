@@ -5,15 +5,17 @@ import 'package:flutter/services.dart';
 typedef KeySender = void Function(String key, bool pressed);
 
 class JoystickWidget extends StatefulWidget {
-  final double    size;
-  final bool      editMode;
+  final double      size;
+  final bool        editMode;
   final KeySender? onKey;
+  final Color       accentColor;
 
   const JoystickWidget({
     super.key,
     this.size     = 140,
     this.editMode = false,
     this.onKey,
+    this.accentColor = const Color(0xFFFF4655),
   });
 
   @override
@@ -89,7 +91,7 @@ class _JoystickState extends State<JoystickWidget>
         width: widget.size, height: widget.size,
         child: CustomPaint(painter: _JsPainter(
           knob: Offset.zero, active: false, editMode: true,
-          pulse: 1.0, deadR: _deadR, maxR: _maxR,
+          pulse: 1.0, deadR: _deadR, maxR: _maxR, accent: widget.accentColor,
         )),
       );
     }
@@ -110,6 +112,7 @@ class _JoystickState extends State<JoystickWidget>
             pulse:    _pulse.value,
             deadR:    _deadR,
             maxR:     _maxR,
+            accent:   widget.accentColor,
           )),
         ),
       ),
@@ -124,17 +127,16 @@ class _JsPainter extends CustomPainter {
   final Offset knob;
   final bool   active, editMode;
   final double pulse, deadR, maxR;
+  final Color  accent;
 
   const _JsPainter({
     required this.knob, required this.active,
     required this.editMode, required this.pulse,
     required this.deadR, required this.maxR,
+    required this.accent,
   });
 
-  static const Color _accent  = Color(0xFFFF4655);
-  static const Color _teal    = Color(0xFF00E6C3);
   static const Color _ring    = Color(0x55FFFFFF);
-  static const Color _ringBg  = Color(0xAA111820);
   static const Color _dimLine = Color(0x33FFFFFF);
   static const Color _editRing= Color(0xFF00E6C3);
 
@@ -149,16 +151,16 @@ class _JsPainter extends CustomPainter {
     if (active) {
       canvas.drawCircle(c, or + 4,
           Paint()
-            ..color = _accent.withOpacity(0.18 * pulse)
+            ..color = accent.withValues(alpha: 0.18 * pulse)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
     }
 
     // ── Outer ring fill ────────────────────────────────────────────────────
     canvas.drawCircle(c, or,
         Paint()
-          ..shader = RadialGradient(colors: [
-              const Color(0xFF1A2330),
-              const Color(0xFF0B1117),
+          ..shader = const RadialGradient(colors: [
+              Color(0xFF1A2330),
+              Color(0xFF0B1117),
             ]).createShader(Rect.fromCircle(center: c, radius: or)));
 
     // ── Directional zone indicators (N/S/E/W triangles) ───────────────────
@@ -175,14 +177,14 @@ class _JsPainter extends CustomPainter {
     canvas.drawCircle(c, or,
         Paint()
           ..style = PaintingStyle.stroke
-          ..color = editMode ? _editRing : (active ? _accent.withOpacity(0.7) : _ring)
+          ..color = editMode ? _editRing : (active ? accent.withValues(alpha: 0.7) : _ring)
           ..strokeWidth = active ? 1.8 : 1.2);
 
     // ── Knob shadow/glow ──────────────────────────────────────────────────
     if (active) {
       canvas.drawCircle(kc, kr + 5,
           Paint()
-            ..color = _accent.withOpacity(0.30)
+            ..color = accent.withValues(alpha: 0.30)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
     }
 
@@ -192,7 +194,7 @@ class _JsPainter extends CustomPainter {
           ..shader = RadialGradient(
             center: const Alignment(-0.3, -0.3),
             colors: active
-                ? [_accent.withOpacity(0.5), const Color(0xFF1A2330)]
+                ? [accent.withValues(alpha: 0.5), const Color(0xFF1A2330)]
                 : [const Color(0xFF2A3A4A), const Color(0xFF111820)],
           ).createShader(Rect.fromCircle(center: kc, radius: kr)));
 
@@ -200,7 +202,7 @@ class _JsPainter extends CustomPainter {
     canvas.drawCircle(kc, kr,
         Paint()
           ..style = PaintingStyle.stroke
-          ..color = active ? _accent : const Color(0x88FFFFFF)
+          ..color = active ? accent : const Color(0x88FFFFFF)
           ..strokeWidth = 1.5);
 
     // ── Knob crosshair ─────────────────────────────────────────────────────
@@ -246,5 +248,5 @@ class _JsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_JsPainter o) =>
-      o.knob != knob || o.active != active || o.pulse != pulse;
+      o.knob != knob || o.active != active || o.pulse != pulse || o.accent != accent;
 }

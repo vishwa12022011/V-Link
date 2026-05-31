@@ -15,15 +15,21 @@ class BleService extends ChangeNotifier {
 
   bool             scanning   = false;
   List<ScanResult> discovered = [];
+  List<BluetoothDevice> pairedDevices = [];
 
   void attach(ConnModel c) => _conn = c;
   bool get connected => _char != null;
 
-  // ── Scan ──────────────────────────────────────────────────────────────────
   Future<void> startScan() async {
     if (scanning) return;
     scanning = true;
     discovered.clear();
+    // Get paired devices
+    try {
+      pairedDevices = await FlutterBluePlus.bondedDevices;
+    } catch (e) {
+      _conn?.log('BLE bonded devices error: $e');
+    }
     notifyListeners();
 
     _conn?.setStatus(ConnStatus.scanning);
@@ -32,7 +38,6 @@ class BleService extends ChangeNotifier {
     try {
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 15),
-        // No withServices filter — show ALL devices
       );
     } catch (e) {
       _conn?.log('BLE scan error: $e');
@@ -43,7 +48,6 @@ class BleService extends ChangeNotifier {
       notifyListeners();
     });
 
-    // Auto-stop after 15 s
     Future.delayed(const Duration(seconds: 15), () {
       if (scanning) stopScan();
     });
@@ -61,13 +65,12 @@ class BleService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect(BluetoothDevice device) async {
     if (scanning) await stopScan();
     _conn?.setStatus(ConnStatus.connecting,
         device: device.platformName.isNotEmpty
             ? device.platformName
-            : device.remoteId.str);
+            : device.remoteId.toString());
     _conn?.log('BLE: Connecting to ${device.platformName}…');
 
     try {
@@ -89,15 +92,13 @@ class BleService extends ChangeNotifier {
         _conn?.setStatus(ConnStatus.connected,
             device: device.platformName.isNotEmpty
                 ? device.platformName
-                : device.remoteId.str);
+                : device.remoteId.toString());
         _conn?.log('BLE: V-LINK service found — ready');
       } else {
-        // Connected but no V-LINK service — still mark connected
-        // (user may connect to any device; HID won't work but connection succeeds)
         _conn?.setStatus(ConnStatus.connected,
             device: device.platformName.isNotEmpty
                 ? device.platformName
-                : device.remoteId.str);
+                : device.remoteId.toString());
         _conn?.log('BLE: Connected (V-LINK HID service not found on this device)');
       }
     } catch (e) {
@@ -107,7 +108,6 @@ class BleService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Disconnect ────────────────────────────────────────────────────────────
   Future<void> disconnect() async {
     await _device?.disconnect();
     _device = null;
@@ -117,7 +117,6 @@ class BleService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Send key packet ───────────────────────────────────────────────────────
   Future<void> sendKey(String key, {bool pressed = true}) async {
     if (_char == null) return;
     try {
@@ -127,7 +126,6 @@ class BleService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // ── Send mouse delta ──────────────────────────────────────────────────────
   Future<void> sendMouse(int dx, int dy) async {
     if (_char == null) return;
     try {

@@ -18,15 +18,15 @@ class ColorPickerSheet extends StatefulWidget {
 }
 
 class _ColorPickerSheetState extends State<ColorPickerSheet> {
+  // Preset array swapped to include your premium desaturated fantasy palette
   static const _palette = [
     Color(0xFFFF4655), // Valorant red
-    Color(0xFF0B3D0B), // dark green
-    Color(0xFF082F5D), // navy
-    Color(0xFF854500), // amber
-    Color(0xFF2A002A), // deep purple
-    Color(0xFF00E6C3), // teal
-    Color(0xFFFFD700), // gold
-    Color(0xFFFFFFFF), // white
+    Color(0xFF3B08C6), // Premium Gold
+    Color(0xFF518563), // Emerald
+    Color(0xFF566A85), // Sapphire
+    Color(0xFF854650), // Ruby
+    Color(0xFF00E6C3), // Original Teal
+    Color(0xFFFFFFFF), // White
   ];
 
   late Color   _current;
@@ -46,8 +46,15 @@ class _ColorPickerSheetState extends State<ColorPickerSheet> {
   @override
   void dispose() { _hexCtrl.dispose(); super.dispose(); }
 
-  String _colorToHex(Color c) =>
-      '#${c.red.toRadixString(16).padLeft(2,'0')}${c.green.toRadixString(16).padLeft(2,'0')}${c.blue.toRadixString(16).padLeft(2,'0')}'.toUpperCase();
+  String _colorToHex(Color c) {
+    // Uses the precise math conversions recommended by the compiler warnings
+    final int r = (c.r * 255.0).round() & 0xff;
+    final int g = (c.g * 255.0).round() & 0xff;
+    final int b = (c.b * 255.0).round() & 0xff;
+    
+    return '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}'
+        .toUpperCase();
+  }
 
   Color _fromHSV() => HSVColor.fromAHSV(1.0, _hue, _sat, _val).toColor();
 
@@ -95,7 +102,8 @@ class _ColorPickerSheetState extends State<ColorPickerSheet> {
         // Palette chips
         Wrap(spacing: 10, runSpacing: 10,
           children: _palette.map((c) {
-            final sel = c.value == _current.value;
+            // Replaced deprecated .value checking with direct color object validation
+            final sel = c == _current;
             return GestureDetector(
               onTap: () => _applyColor(c),
               child: AnimatedContainer(
@@ -108,7 +116,7 @@ class _ColorPickerSheetState extends State<ColorPickerSheet> {
                     width: 2,
                   ),
                   shape: BoxShape.circle,
-                  boxShadow: sel ? [BoxShadow(color: c.withOpacity(0.6), blurRadius: 8)] : [],
+                  boxShadow: sel ? [BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 8)] : [],
                 ),
                 child: sel
                     ? const Icon(Icons.check, color: Colors.white, size: 18)

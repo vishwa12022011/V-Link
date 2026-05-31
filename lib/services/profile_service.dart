@@ -55,9 +55,34 @@ class ProfileService extends ChangeNotifier {
     if (i >= 0) { active!.buttons[i] = updated; notifyListeners(); }
   }
 
-  void updateBinding(KeyBinding updated) {
-    if (active == null) return;
-    final i = active!.bindings.indexWhere((b) => b.id == updated.id);
-    if (i >= 0) { active!.bindings[i] = updated; notifyListeners(); }
+  void updateBinding(HudProfile profile, KeyBinding updated) {
+    profile.bindings.forEach((key, value) {
+      final i = value.indexWhere((b) => b.id == updated.id);
+      if (i >= 0) {
+        value[i] = updated;
+      }
+    });
+  }
+
+  Future<void> resetToDefaults(HudProfile profile) async {
+    // Fixed: Uses copyWith() on the KeyBinding model to clone deep objects securely
+    final defaultBindings = Map<String, List<KeyBinding>>.from(
+      HudProfile.defaults.bindings.map(
+        (key, value) => MapEntry(
+          key,
+          value.map((binding) => binding.copyWith(
+            label: binding.label,
+            keySequence: binding.keySequence,
+            isHold: binding.isHold,
+            isToggle: binding.isToggle,
+          )).toList(),
+        ),
+      ),
+    );
+    final defaultButtons = HudProfile.defaults.buttons.map((b) => b.clone()).toList();
+
+    profile.bindings = defaultBindings;
+    profile.buttons = defaultButtons;
+    await save(profile);
   }
 }

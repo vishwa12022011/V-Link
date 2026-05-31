@@ -4,26 +4,18 @@ import '../models/app_models.dart';
 import '../utils/app_theme.dart';
 import 'weapon_silhouette_painter.dart';
 
-/// Weapon slot bar matching the reference screenshot layout:
-///
-///  ┌───────────────────────────────────────────┐
-///  │  [silhouette]  SLOT_LABEL        key ▌    │  ← big box (active)
-///  └───────────────────────────────────────────┘
-///  [ slot1 ]  [ slot2 ]  [ slot3 ]              ← bottom row (inactive, slanted)
-///
-/// • No ammo count shown
-/// • Active weapon: horizontal, name on left, silhouette on right
-/// • Inactive slots: slanted upward silhouette only
 class WeaponSlotBar extends StatelessWidget {
   final WeaponSlotModel model;
   final void Function(String key) onKeyTap;
   final bool editMode;
+  final double scale;
 
   const WeaponSlotBar({
     super.key,
     required this.model,
     required this.onKeyTap,
     this.editMode = false,
+    this.scale = 1.0,
   });
 
   @override
@@ -32,41 +24,39 @@ class WeaponSlotBar extends StatelessWidget {
     final active   = model.activeWeapon;
     final inactive = model.inactiveWeapons;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Big active box ─────────────────────────────────────────────────
-        _ActiveBox(weapon: active, accent: accent, editMode: editMode),
-        const SizedBox(height: 3),
-
-        // ── Inactive bottom row ────────────────────────────────────────────
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: inactive.map((w) => Padding(
-            padding: const EdgeInsets.only(right: 3),
-            child: _InactiveSlot(
-              weapon:   w,
-              accent:   accent,
-              editMode: editMode,
-              onTap:    () {
-                if (!editMode) {
-                  model.activateById(w.id);
-                  onKeyTap(w.keySequence);
-                }
-              },
-            ),
-          )).toList(),
-        ),
-      ],
+    return Transform.scale(
+      scale: scale,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ActiveBox(weapon: active, accent: accent, editMode: editMode),
+          const SizedBox(height: 3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: inactive.map((w) => Padding(
+              padding: const EdgeInsets.only(right: 3),
+              child: _InactiveSlot(
+                weapon:   w,
+                accent:   accent,
+                editMode: editMode,
+                onTap:    () {
+                  if (!editMode) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      model.activateById(w.id);
+                    });
+                    onKeyTap(w.keySequence);
+                  }
+                },
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BIG ACTIVE BOX
-// Layout: [slot label] [weapon name]  |  [silhouette]  [key badge] [accent bar]
-// ══════════════════════════════════════════════════════════════════════════════
 class _ActiveBox extends StatelessWidget {
   final WeaponDef weapon;
   final Color     accent;
@@ -88,12 +78,11 @@ class _ActiveBox extends StatelessWidget {
         border: Border.all(
           color: editMode
               ? const Color(0xFF00E6C3)
-              : accent.withOpacity(0.50),
+              : accent.withValues(alpha: 0.50), // FIXED: withValues
           width: editMode ? 1.5 : 1.0,
         ),
       ),
       child: Row(children: [
-        // Left: slot label + weapon name
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(left: 10),
@@ -103,7 +92,7 @@ class _ActiveBox extends StatelessWidget {
               children: [
                 Text(
                   weapon.slotLabel.toUpperCase(),
-                  style: T.mono(8, color: accent.withOpacity(0.70)),
+                  style: T.mono(8, color: accent.withValues(alpha: 0.70)), // FIXED: withValues
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -116,27 +105,23 @@ class _ActiveBox extends StatelessWidget {
             ),
           ),
         ),
-
-        // Right: weapon silhouette (horizontal, facing left)
         SizedBox(
           width:  90,
           height: 62,
           child: CustomPaint(
             painter: WeaponSilhouettePainter(
-              type:   weapon.type,
-              color:  Colors.white.withOpacity(0.82),
+              type:  weapon.type,
+              color:  Colors.white.withValues(alpha: 0.82), // FIXED: withValues
               active: true,
             ),
           ),
         ),
-
-        // Key badge
         Container(
           width:  26,
           margin: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
           decoration: BoxDecoration(
-            color: accent.withOpacity(0.18),
-            border: Border.all(color: accent.withOpacity(0.45)),
+            color: accent.withValues(alpha: 0.18), // FIXED: withValues
+            border: Border.all(color: accent.withValues(alpha: 0.45)), // FIXED: withValues
           ),
           child: Center(
             child: Text(
@@ -145,18 +130,12 @@ class _ActiveBox extends StatelessWidget {
             ),
           ),
         ),
-
-        // Accent bar (right edge)
         Container(width: 4, color: accent),
       ]),
     );
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// INACTIVE SLOT
-// Slanted upward ~30°, silhouette only, no text, tap to activate
-// ══════════════════════════════════════════════════════════════════════════════
 class _InactiveSlot extends StatefulWidget {
   final WeaponDef    weapon;
   final Color        accent;
@@ -208,11 +187,11 @@ class _InactiveSlotState extends State<_InactiveSlot>
         builder: (_, child) =>
             Transform.scale(scale: _scale.value, child: child),
         child: Container(
-          width:  62,
+          width:  67,
           height: 55,
           decoration: BoxDecoration(
             color: _down
-                ? widget.accent.withOpacity(0.18)
+                ? widget.accent.withValues(alpha: 0.18) // FIXED: withValues
                 : const Color(0xBB0B1117),
             border: Border.all(
               color: widget.editMode
@@ -224,19 +203,17 @@ class _InactiveSlotState extends State<_InactiveSlot>
             ),
           ),
           child: Stack(children: [
-            // Slanted silhouette (painted with rotation inside painter)
             Positioned.fill(
               child: CustomPaint(
                 painter: WeaponSilhouettePainter(
-                  type:   widget.weapon.type,
+                  type:  widget.weapon.type,
                   color:  _down
                       ? widget.accent
-                      : Colors.white.withOpacity(0.55),
-                  active: false, // slanted upward
+                      : Colors.white.withValues(alpha: 0.55), // FIXED: withValues
+                  active: false,
                 ),
               ),
             ),
-            // Key number badge (bottom-right)
             Positioned(
               bottom: 3, right: 4,
               child: Container(
