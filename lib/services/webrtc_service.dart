@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 enum WebRtcState { idle, connecting, connected, error }
 
@@ -9,7 +9,7 @@ class WebRtcService extends ChangeNotifier {
   // WebRTC & Signaling Objects
   RTCPeerConnection? _peerConnection;
   RTCDataChannel? _dataChannel;
-  IO.Socket? _socket;
+  io.Socket? _socket;
   final RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
 
   // State Management
@@ -36,9 +36,9 @@ class WebRtcService extends ChangeNotifier {
       notifyListeners();
 
       // 1. Initialize Signaling
-      _socket = IO.io(
+      _socket = io.io(
           sessionUrl!,
-          IO.OptionBuilder()
+          io.OptionBuilder()
               .setTransports(['websocket'])
               .disableAutoConnect()
               .build());
@@ -70,7 +70,7 @@ class WebRtcService extends ChangeNotifier {
 
       // 5. Connect Socket
       _socket!.connect();
-      _socket!.onConnect((_) => print("Connected to signaling server"));
+      _socket!.onConnect((_) => debugPrint("Connected to signaling server"));
     } catch (e) {
       state = WebRtcState.error;
       errorMsg = e.toString();

@@ -628,16 +628,21 @@ class _HudBg extends StatelessWidget {
 class _HudBgP extends CustomPainter {
   @override
   void paint(Canvas canvas, Size s) {
+    // Use the new Color.alphaBlend or Color.withValues depending on your Flutter version.
+    // If your analyzer says withOpacity is deprecated, replace with .withValues(alpha: 0.16).
     final p = Paint()..color = const Color(0xFF1A2330).withValues(alpha: 0.16);
-    for (double x = 0; x < s.width; x += 40)
+
+    for (double x = 0; x < s.width; x += 40) {
       for (double y = 0; y < s.height; y += 40) {
         canvas.drawCircle(Offset(x, y), 0.6, p);
       }
+    }
   }
 
   @override
   bool shouldRepaint(_) => false;
 }
+
 
 class _ConnDot extends StatelessWidget {
   final Color accent;

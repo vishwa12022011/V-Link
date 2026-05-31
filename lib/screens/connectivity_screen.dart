@@ -268,7 +268,7 @@ class _BluetoothHidPanel extends StatelessWidget {
         statusColor: hid.btHidActive ? T.teal : T.greyDim,
         action: isConnectedToHost || isAdvertising
             ? null
-            : _ActionBtn('ADVERTISE', T.red, () {
+            : _actionBtn('ADVERTISE', T.red, () {
                 context.read<HidService>().startBluetoothHid();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text('Phone is advertising for 300 seconds...',
@@ -281,7 +281,7 @@ class _BluetoothHidPanel extends StatelessWidget {
       if (isConnectedToHost || isAdvertising)
         Padding(
           padding: const EdgeInsets.only(top: 8.0),
-          child: _ActionBtn('STOP', T.grey,
+          child: _actionBtn('STOP', T.grey,
               () => context.read<HidService>().stopBluetoothHid()),
         ),
       const Divider(color: T.border, height: 24, thickness: 1),
@@ -517,7 +517,11 @@ class _UsbHidPanelState extends State<_UsbHidPanel> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<HidService>().checkUsbPrerequisites());
+
+    // Capture the service immediately, without holding onto context later
+    final hidService = context.read<HidService>();
+
+    Future.microtask(() => hidService.checkUsbPrerequisites());
   }
 
   Future<void> _detectHost() async {
@@ -868,7 +872,7 @@ class _InfoRow extends StatelessWidget {
       ]);
 }
 
-Widget _ActionBtn(String label, Color color, VoidCallback onTap) =>
+Widget _actionBtn(String label, Color color, VoidCallback onTap) =>
     GestureDetector(
       onTap: onTap,
       child: Container(

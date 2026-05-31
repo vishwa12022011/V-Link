@@ -30,25 +30,32 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   void _onDetect(BarcodeCapture capture) async {
     if (_scanned) return;
-    final barcode = capture.barcodes.firstOrNull;
-    if (barcode == null || barcode.rawValue == null) return;
+    if (capture.barcodes.isEmpty) return;
+
+    final barcode = capture.barcodes.first;
+    if (barcode.rawValue == null) return;
+
+    // Capture dependencies BEFORE async gap
+    final webrtcService = context.read<WebRtcService>();
+    final navigator = Navigator.of(context);
 
     setState(() => _scanned = true);
     await _ctrl.stop();
 
     final payload = barcode.rawValue!;
+
     try {
-      // Ensure the service can handle the connection attempt
-      await context.read<WebRtcService>().connectFromQr(payload);
-      if (mounted) Navigator.of(context).pop();
+      await webrtcService.connectFromQr(payload);
+
+      if (!mounted) return;
+      navigator.pop();
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _scanned = false;
-          _error = 'Invalid QR code: $e';
-        });
-        await _ctrl.start();
-      }
+      if (!mounted) return;
+      setState(() {
+        _scanned = false;
+        _error = 'Invalid QR code: $e';
+      });
+      await _ctrl.start();
     }
   }
 
@@ -73,7 +80,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                // UPDATED: Use withValues(alpha: ...)
                 colors: [T.bg0, T.bg0.withValues(alpha: 0)],
               ),
             ),
@@ -84,7 +90,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    // UPDATED: Use withValues(alpha: ...)
                     color: T.bg1.withValues(alpha: 0.85),
                     border: Border.all(color: T.border),
                   ),
@@ -132,7 +137,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  // UPDATED: Use withValues(alpha: ...)
                   color: T.red.withValues(alpha: 0.15),
                   border: Border.all(color: T.red),
                 ),
@@ -150,8 +154,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 class _ScanOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // ... (Keep your existing painting logic here, just ensure no .withOpacity is used)
-    // Example:
+    // Example overlay paint
     canvas.drawPath(
         Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
         Paint()
@@ -160,5 +163,5 @@ class _ScanOverlayPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -156,7 +156,8 @@ class _HudCompactEditPanelState extends State<HudCompactEditPanel>
           // ── Expandable sliders section ────────────────────────────────
           SizeTransition(
             sizeFactor: _expand,
-            axisAlignment: -1,
+            axis: Axis.vertical,
+            alignment: Alignment.topCenter,
             child: Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
