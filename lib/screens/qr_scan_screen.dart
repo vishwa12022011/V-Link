@@ -43,7 +43,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
     } catch (e) {
       setState(() {
         _scanned = false;
-        _error   = 'Invalid QR code: $e';
+        _error = 'Invalid QR code: $e';
       });
       await _ctrl.start();
     }
@@ -56,11 +56,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
     return Scaffold(
       backgroundColor: T.bg0,
       body: Stack(children: [
-
         // Camera feed
         MobileScanner(
           controller: _ctrl,
-          onDetect:   _onDetect,
+          onDetect: _onDetect,
         ),
 
         // Dark overlay with scan window cutout
@@ -68,13 +67,15 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
         // Top bar
         Positioned(
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: 0,
+          right: 0,
           child: Container(
             padding: const EdgeInsets.fromLTRB(16, 52, 16, 16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
-                end:   Alignment.bottomCenter,
+                end: Alignment.bottomCenter,
                 colors: [T.bg0, T.bg0.withOpacity(0)],
               ),
             ),
@@ -82,20 +83,23 @@ class _QrScanScreenState extends State<QrScanScreen> {
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: T.bg1.withOpacity(0.85),
                     border: Border.all(color: T.border),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.arrow_back_ios_new, color: T.grey, size: 12),
+                    const Icon(Icons.arrow_back_ios_new,
+                        color: T.grey, size: 12),
                     const SizedBox(width: 4),
                     Text('BACK', style: T.mono(9, color: T.grey)),
                   ]),
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(child: Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('SCAN QR CODE', style: T.orb(15)),
@@ -108,7 +112,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
         ),
 
         // Centre label
-        Center(child: Column(
+        Center(
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 20),
@@ -117,10 +122,14 @@ class _QrScanScreenState extends State<QrScanScreen> {
             const SizedBox(height: 16),
             if (_scanned && webrtc.isConnecting)
               Row(mainAxisSize: MainAxisSize.min, children: [
-                const SizedBox(width: 16, height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: T.teal)),
+                const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: T.teal)),
                 const SizedBox(width: 10),
-                Text('Connecting via WebRTC…', style: T.mono(10, color: T.teal)),
+                Text('Connecting via WebRTC…',
+                    style: T.mono(10, color: T.teal)),
               ]),
             if (_error != null)
               Container(
@@ -130,7 +139,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   color: T.red.withOpacity(0.15),
                   border: Border.all(color: T.red),
                 ),
-                child: Text(_error!, style: T.mono(10, color: T.red),
+                child: Text(_error!,
+                    style: T.mono(10, color: T.red),
                     textAlign: TextAlign.center),
               ),
           ],
@@ -138,7 +148,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
         // Bottom hint
         Positioned(
-          bottom: 40, left: 0, right: 0,
+          bottom: 40,
+          left: 0,
+          right: 0,
           child: Column(children: [
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 40),
@@ -148,7 +160,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 border: Border.all(color: T.border),
               ),
               child: Column(children: [
-                Text('How to get the QR code', style: T.raj(13, color: T.white)),
+                Text('How to get the QR code',
+                    style: T.raj(13, color: T.white)),
                 const SizedBox(height: 6),
                 Text(
                   '1. Run  pc_server/server.js  on your PC\n'
@@ -172,11 +185,11 @@ class _ScanOverlayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const winW = 260.0;
     const winH = 260.0;
-    final cx   = size.width  / 2;
-    final cy   = size.height / 2 - 20;
+    final cx = size.width / 2;
+    final cy = size.height / 2 - 20;
 
-    final rect = Rect.fromCenter(
-        center: Offset(cx, cy), width: winW, height: winH);
+    final rect =
+        Rect.fromCenter(center: Offset(cx, cy), width: winW, height: winH);
 
     // Dark overlay with hole
     final path = Path()
@@ -184,20 +197,26 @@ class _ScanOverlayPainter extends CustomPainter {
       ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(8)))
       ..fillType = PathFillType.evenOdd;
 
-    canvas.drawPath(path,
-        Paint()..color = const Color(0xBB000000)..style = PaintingStyle.fill);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = const Color(0xBB000000)
+          ..style = PaintingStyle.fill);
 
     // Corner brackets
-    const cLen  = 24.0;
-    const cW    = 3.0;
+    const cLen = 24.0;
+    const cW = 3.0;
     final cPaint = Paint()
-      ..color     = const Color(0xFFFF4655)
+      ..color = const Color(0xFFFF4655)
       ..strokeWidth = cW
       ..strokeCap = StrokeCap.square
-      ..style     = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke;
 
     final corners = [
-      rect.topLeft, rect.topRight, rect.bottomLeft, rect.bottomRight,
+      rect.topLeft,
+      rect.topRight,
+      rect.bottomLeft,
+      rect.bottomRight,
     ];
     final dirs = [
       [Offset(cLen, 0), Offset(0, cLen)],
@@ -212,5 +231,6 @@ class _ScanOverlayPainter extends CustomPainter {
     }
   }
 
-  @override bool shouldRepaint(_) => false;
+  @override
+  bool shouldRepaint(_) => false;
 }

@@ -5,15 +5,15 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../models/app_models.dart';
 
 class BleService extends ChangeNotifier {
-  static const _svcUuid  = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+  static const _svcUuid = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
   static const _charUuid = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
-  BluetoothDevice?         _device;
+  BluetoothDevice? _device;
   BluetoothCharacteristic? _char;
-  StreamSubscription?      _scanSub;
-  ConnModel?               _conn;
+  StreamSubscription? _scanSub;
+  ConnModel? _conn;
 
-  bool             scanning   = false;
+  bool scanning = false;
   List<ScanResult> discovered = [];
 
   void attach(ConnModel c) => _conn = c;
@@ -98,7 +98,8 @@ class BleService extends ChangeNotifier {
             device: device.platformName.isNotEmpty
                 ? device.platformName
                 : device.remoteId.str);
-        _conn?.log('BLE: Connected (V-LINK HID service not found on this device)');
+        _conn?.log(
+            'BLE: Connected (V-LINK HID service not found on this device)');
       }
     } catch (e) {
       _conn?.log('BLE: Connection failed — $e');
@@ -111,7 +112,7 @@ class BleService extends ChangeNotifier {
   Future<void> disconnect() async {
     await _device?.disconnect();
     _device = null;
-    _char   = null;
+    _char = null;
     _conn?.setStatus(ConnStatus.disconnected);
     _conn?.log('BLE: Disconnected');
     notifyListeners();
@@ -121,8 +122,7 @@ class BleService extends ChangeNotifier {
   Future<void> sendKey(String key, {bool pressed = true}) async {
     if (_char == null) return;
     try {
-      final payload = utf8.encode(
-          jsonEncode({'k': key, 's': pressed ? 1 : 0}));
+      final payload = utf8.encode(jsonEncode({'k': key, 's': pressed ? 1 : 0}));
       await _char!.write(payload, withoutResponse: true);
     } catch (_) {}
   }
@@ -131,8 +131,8 @@ class BleService extends ChangeNotifier {
   Future<void> sendMouse(int dx, int dy) async {
     if (_char == null) return;
     try {
-      final payload = utf8.encode(
-          jsonEncode({'t': 'mouse', 'dx': dx, 'dy': dy}));
+      final payload =
+          utf8.encode(jsonEncode({'t': 'mouse', 'dx': dx, 'dy': dy}));
       await _char!.write(payload, withoutResponse: true);
     } catch (_) {}
   }

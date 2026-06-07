@@ -27,10 +27,10 @@ void main() async {
 
   // ── Make bars transparent when briefly peeked ─────────────────────────────
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor:               Colors.transparent,
-    navigationBarColor:           Colors.transparent,
-    statusBarIconBrightness:      Brightness.light,
-    navigationBarIconBrightness:  Brightness.light,
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.light,
   ));
 
   runApp(const VLinkApp());
@@ -54,10 +54,10 @@ class VLinkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WebRtcService()),
       ],
       child: MaterialApp(
-        title:                     'V-LINK',
+        title: 'V-LINK',
         debugShowCheckedModeBanner: false,
-        theme:                     T.dark,
-        home:                      const BootScreen(),
+        theme: T.dark,
+        home: const BootScreen(),
       ),
     );
   }

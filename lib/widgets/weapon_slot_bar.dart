@@ -28,8 +28,8 @@ class WeaponSlotBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent   = model.accentColor;
-    final active   = model.activeWeapon;
+    final accent = model.accentColor;
+    final active = model.activeWeapon;
     final inactive = model.inactiveWeapons;
 
     return Column(
@@ -43,20 +43,22 @@ class WeaponSlotBar extends StatelessWidget {
         // ── Inactive bottom row ────────────────────────────────────────────
         Row(
           mainAxisSize: MainAxisSize.min,
-          children: inactive.map((w) => Padding(
-            padding: const EdgeInsets.only(right: 3),
-            child: _InactiveSlot(
-              weapon:   w,
-              accent:   accent,
-              editMode: editMode,
-              onTap:    () {
-                if (!editMode) {
-                  model.activateById(w.id);
-                  onKeyTap(w.keySequence);
-                }
-              },
-            ),
-          )).toList(),
+          children: inactive
+              .map((w) => Padding(
+                    padding: const EdgeInsets.only(right: 3),
+                    child: _InactiveSlot(
+                      weapon: w,
+                      accent: accent,
+                      editMode: editMode,
+                      onTap: () {
+                        if (!editMode) {
+                          model.activateById(w.id);
+                          onKeyTap(w.keySequence);
+                        }
+                      },
+                    ),
+                  ))
+              .toList(),
         ),
       ],
     );
@@ -69,8 +71,8 @@ class WeaponSlotBar extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════════════
 class _ActiveBox extends StatelessWidget {
   final WeaponDef weapon;
-  final Color     accent;
-  final bool      editMode;
+  final Color accent;
+  final bool editMode;
 
   const _ActiveBox({
     required this.weapon,
@@ -81,14 +83,12 @@ class _ActiveBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width:  210,
+      width: 210,
       height: 62,
       decoration: BoxDecoration(
         color: const Color(0xCC0B1117),
         border: Border.all(
-          color: editMode
-              ? const Color(0xFF00E6C3)
-              : accent.withOpacity(0.50),
+          color: editMode ? const Color(0xFF00E6C3) : accent.withOpacity(0.50),
           width: editMode ? 1.5 : 1.0,
         ),
       ),
@@ -119,12 +119,12 @@ class _ActiveBox extends StatelessWidget {
 
         // Right: weapon silhouette (horizontal, facing left)
         SizedBox(
-          width:  90,
+          width: 90,
           height: 62,
           child: CustomPaint(
             painter: WeaponSilhouettePainter(
-              type:   weapon.type,
-              color:  Colors.white.withOpacity(0.82),
+              type: weapon.type,
+              color: Colors.white.withOpacity(0.82),
               active: true,
             ),
           ),
@@ -132,7 +132,7 @@ class _ActiveBox extends StatelessWidget {
 
         // Key badge
         Container(
-          width:  26,
+          width: 26,
           margin: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
           decoration: BoxDecoration(
             color: accent.withOpacity(0.18),
@@ -158,9 +158,9 @@ class _ActiveBox extends StatelessWidget {
 // Slanted upward ~30°, silhouette only, no text, tap to activate
 // ══════════════════════════════════════════════════════════════════════════════
 class _InactiveSlot extends StatefulWidget {
-  final WeaponDef    weapon;
-  final Color        accent;
-  final bool         editMode;
+  final WeaponDef weapon;
+  final Color accent;
+  final bool editMode;
   final VoidCallback onTap;
 
   const _InactiveSlot({
@@ -177,19 +177,23 @@ class _InactiveSlot extends StatefulWidget {
 class _InactiveSlotState extends State<_InactiveSlot>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
-  late Animation<double>   _scale;
+  late Animation<double> _scale;
   bool _down = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl  = AnimationController(vsync: this, duration: const Duration(milliseconds: 90));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 90));
     _scale = Tween(begin: 1.0, end: 0.88)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,14 +205,20 @@ class _InactiveSlotState extends State<_InactiveSlot>
         _ctrl.forward();
         widget.onTap();
       },
-      onTapUp:     (_) { setState(() => _down = false); _ctrl.reverse(); },
-      onTapCancel: ()  { setState(() => _down = false); _ctrl.reverse(); },
+      onTapUp: (_) {
+        setState(() => _down = false);
+        _ctrl.reverse();
+      },
+      onTapCancel: () {
+        setState(() => _down = false);
+        _ctrl.reverse();
+      },
       child: AnimatedBuilder(
         animation: _scale,
         builder: (_, child) =>
             Transform.scale(scale: _scale.value, child: child),
         child: Container(
-          width:  62,
+          width: 62,
           height: 55,
           decoration: BoxDecoration(
             color: _down
@@ -228,23 +238,20 @@ class _InactiveSlotState extends State<_InactiveSlot>
             Positioned.fill(
               child: CustomPaint(
                 painter: WeaponSilhouettePainter(
-                  type:   widget.weapon.type,
-                  color:  _down
-                      ? widget.accent
-                      : Colors.white.withOpacity(0.55),
+                  type: widget.weapon.type,
+                  color: _down ? widget.accent : Colors.white.withOpacity(0.55),
                   active: false, // slanted upward
                 ),
               ),
             ),
             // Key number badge (bottom-right)
             Positioned(
-              bottom: 3, right: 4,
+              bottom: 3,
+              right: 4,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: _down
-                      ? widget.accent
-                      : const Color(0x44FFFFFF),
+                  color: _down ? widget.accent : const Color(0x44FFFFFF),
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: Text(

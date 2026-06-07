@@ -5,25 +5,28 @@ import 'package:flutter/foundation.dart';
 import '../models/app_models.dart';
 
 class WifiService extends ChangeNotifier {
-  static const _port      = 4242;
+  static const _port = 4242;
   static const _broadcast = '255.255.255.255';
-  static const _pingMsg   = 'VLINK_DISCOVER';
-  static const _pongMsg   = 'VLINK_HERE';
+  static const _pingMsg = 'VLINK_DISCOVER';
+  static const _pongMsg = 'VLINK_HERE';
 
-  String  ip           = '192.168.4.1';
-  bool    discovering  = false;
+  String ip = '192.168.4.1';
+  bool discovering = false;
 
-  RawDatagramSocket? _sock;       // send/receive socket
-  RawDatagramSocket? _discSock;   // discovery socket
-  ConnModel?         _conn;
-  Timer?             _discTimer;
+  RawDatagramSocket? _sock; // send/receive socket
+  RawDatagramSocket? _discSock; // discovery socket
+  ConnModel? _conn;
+  Timer? _discTimer;
 
   List<String> discoveredHosts = [];
 
   void attach(ConnModel c) => _conn = c;
   bool get connected => _sock != null;
 
-  void setIp(String v) { ip = v; notifyListeners(); }
+  void setIp(String v) {
+    ip = v;
+    notifyListeners();
+  }
 
   // ── UDP Broadcast Discovery ───────────────────────────────────────────────
   Future<void> startDiscovery() async {
@@ -34,8 +37,7 @@ class WifiService extends ChangeNotifier {
     _conn?.log('WiFi: Discovery started — broadcasting on :$_port');
 
     try {
-      _discSock = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv4, 0,
+      _discSock = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0,
           reuseAddress: true);
       _discSock!.broadcastEnabled = true;
 
@@ -65,8 +67,8 @@ class WifiService extends ChangeNotifier {
         );
       });
       // Send immediately
-      _discSock!.send(
-          utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
+      _discSock!
+          .send(utf8.encode(_pingMsg), InternetAddress(_broadcast), _port);
 
       // Auto-stop after 15 s
       Future.delayed(const Duration(seconds: 15), () {
@@ -84,7 +86,8 @@ class WifiService extends ChangeNotifier {
     _discTimer?.cancel();
     _discSock?.close();
     _discSock = null;
-    _conn?.log('WiFi: Discovery stopped — ${discoveredHosts.length} host(s) found');
+    _conn?.log(
+        'WiFi: Discovery stopped — ${discoveredHosts.length} host(s) found');
     notifyListeners();
   }
 
@@ -116,7 +119,8 @@ class WifiService extends ChangeNotifier {
     try {
       _sock!.send(
         utf8.encode(jsonEncode({'k': key, 's': pressed ? 1 : 0})),
-        InternetAddress(ip), _port,
+        InternetAddress(ip),
+        _port,
       );
     } catch (_) {}
   }
@@ -127,7 +131,8 @@ class WifiService extends ChangeNotifier {
     try {
       _sock!.send(
         utf8.encode(jsonEncode({'t': 'mouse', 'dx': dx, 'dy': dy})),
-        InternetAddress(ip), _port,
+        InternetAddress(ip),
+        _port,
       );
     } catch (_) {}
   }

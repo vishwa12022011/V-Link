@@ -11,11 +11,17 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # State
+  # State Management
   provider: 6.1.2
 
-  # BLE
+  # BLE (Central Mode)
   flutter_blue_plus: 1.31.13
+  
+  # BLE (Peripheral Mode - Added)
+  flutter_ble_peripheral: ^2.0.0
+  
+  # Permissions (Required for Android 14/API 34)
+  permission_handler: ^11.0.0
 
   # Storage
   shared_preferences: 2.2.3

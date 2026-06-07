@@ -34,7 +34,8 @@ class WeaponBar extends StatelessWidget {
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.menu, color: const Color(0xAAFFFFFF), size: 14),
             const SizedBox(height: 2),
-            Text('Continuous', style: T.mono(8, color: const Color(0x88FFFFFF))),
+            Text('Continuous',
+                style: T.mono(8, color: const Color(0x88FFFFFF))),
           ]),
         ),
       ]),
@@ -46,7 +47,8 @@ class _WeaponSlot extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool active;
-  const _WeaponSlot({required this.icon, required this.label, required this.active});
+  const _WeaponSlot(
+      {required this.icon, required this.label, required this.active});
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +58,11 @@ class _WeaponSlot extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(children: [
           Icon(icon,
-              color: active ? Colors.white : const Color(0x88FFFFFF),
-              size: 22),
+              color: active ? Colors.white : const Color(0x88FFFFFF), size: 22),
           const SizedBox(width: 6),
           Text(label,
-              style: T.raj(11, color: active ? Colors.white : const Color(0x88FFFFFF))),
+              style: T.raj(11,
+                  color: active ? Colors.white : const Color(0x88FFFFFF))),
         ]),
       ),
     );

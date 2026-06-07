@@ -4,60 +4,81 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_models.dart';
 
 class ProfileService extends ChangeNotifier {
-  static const _listKey   = 'vlink_profiles_v2';
+  static const _listKey = 'vlink_profiles_v2';
   static const _activeKey = 'vlink_active_v2';
 
   List<HudProfile> profiles = [];
   HudProfile? active;
 
-  ProfileService() { _load(); }
+  ProfileService() {
+    _load();
+  }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw   = prefs.getString(_listKey);
+    final raw = prefs.getString(_listKey);
     final actId = prefs.getString(_activeKey);
     if (raw != null) {
-      profiles = (jsonDecode(raw) as List).map((e) => HudProfile.fromJson(e)).toList();
+      profiles =
+          (jsonDecode(raw) as List).map((e) => HudProfile.fromJson(e)).toList();
     }
-    if (profiles.isEmpty) { profiles.add(HudProfile.defaults); await _save(); }
+    if (profiles.isEmpty) {
+      profiles.add(HudProfile.defaults);
+      await _save();
+    }
     active = actId != null
-        ? profiles.firstWhere((p) => p.id == actId, orElse: () => profiles.first)
+        ? profiles.firstWhere((p) => p.id == actId,
+            orElse: () => profiles.first)
         : profiles.first;
     notifyListeners();
   }
 
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_listKey, jsonEncode(profiles.map((p) => p.toJson()).toList()));
+    await prefs.setString(
+        _listKey, jsonEncode(profiles.map((p) => p.toJson()).toList()));
     if (active != null) await prefs.setString(_activeKey, active!.id);
   }
 
   Future<void> save(HudProfile p) async {
     p.updatedAt = DateTime.now();
     final i = profiles.indexWhere((x) => x.id == p.id);
-    if (i >= 0) profiles[i] = p; else profiles.add(p);
-    await _save(); notifyListeners();
+    if (i >= 0)
+      profiles[i] = p;
+    else
+      profiles.add(p);
+    await _save();
+    notifyListeners();
   }
 
   Future<void> setActive(HudProfile p) async {
-    active = p; await _save(); notifyListeners();
+    active = p;
+    await _save();
+    notifyListeners();
   }
 
   Future<void> delete(String id) async {
     profiles.removeWhere((p) => p.id == id);
     if (active?.id == id) active = profiles.isNotEmpty ? profiles.first : null;
-    await _save(); notifyListeners();
+    await _save();
+    notifyListeners();
   }
 
   void updateBtn(HudBtn updated) {
     if (active == null) return;
     final i = active!.buttons.indexWhere((b) => b.id == updated.id);
-    if (i >= 0) { active!.buttons[i] = updated; notifyListeners(); }
+    if (i >= 0) {
+      active!.buttons[i] = updated;
+      notifyListeners();
+    }
   }
 
   void updateBinding(KeyBinding updated) {
     if (active == null) return;
     final i = active!.bindings.indexWhere((b) => b.id == updated.id);
-    if (i >= 0) { active!.bindings[i] = updated; notifyListeners(); }
+    if (i >= 0) {
+      active!.bindings[i] = updated;
+      notifyListeners();
+    }
   }
 }
